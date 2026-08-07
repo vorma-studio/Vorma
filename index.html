@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VORMA - 瓶肩幾何光學模擬器 Studio (Instant View & Model)</title>
+  <title>VORMA - 瓶肩幾何光學模擬器 Studio (Slider Sync Fixed)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- 導入 Three.js 實現真 3D WebGL 平滑實體視圖與 OrbitControls 手勢 controls -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -183,7 +183,7 @@
 
       <div class="w-8 h-[1px] bg-slate-800/60"></div>
 
-      <!-- VIEW 按鈕群標籤 (更名為 Model) -->
+      <!-- VIEW 按鈕群 -->
       <div class="flex flex-col gap-2 items-center w-full px-1" id="view-mode-group">
         <button class="view-btn active" onclick="switchTab('opticsTab', this)">RAY</button>
         <button class="view-btn" onclick="switchTab('cadTab', this)">CAD</button>
@@ -219,7 +219,7 @@
           <div id="three-container" class="w-[620px] h-[540px] relative rounded-lg overflow-hidden border border-slate-800"></div>
         </div>
 
-        <!-- 專屬於 Model 頁籤的計算 Loader (其餘 2D/CAD 頁籤直刷) -->
+        <!-- Model 頁籤專屬加載 Loader -->
         <div id="compute-loader" class="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 hidden">
           <div class="w-10 h-10 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
           <div class="text-center space-y-1">
@@ -490,6 +490,7 @@ const i18nDict = {
     labelTextureType: "紋理類型",
     texSmooth: "平滑", texVertical: "縱向直紋", texSaw: "鋸齒", texWave: "正弦波", texDiamond: "鑽石紋",
     labelDepth: "紋理深度:", labelDensity: "紋理密度:", labelTwist: "條紋旋轉角:",
+    labelWaveGrad: "疏密漸變微調:",
     cardOpticsTitle: "光源與入射光學",
     sumLight: "類型", sumWl: "波長",
     labelLightType: "光源類型", lightShelf: "貨架頂光束", lightParallel: "全平行光", lightPoint: "發散燈泡光",
@@ -522,6 +523,7 @@ const i18nDict = {
     labelTextureType: "Pattern Type",
     texSmooth: "Smooth", texVertical: "Vertical", texSaw: "Sawtooth", texWave: "Wave", texDiamond: "Diamond",
     labelDepth: "Texture Depth:", labelDensity: "Density:", labelTwist: "Twist Angle:",
+    labelWaveGrad: "Density Gradient:",
     cardOpticsTitle: "Lighting & Source",
     sumLight: "Type", sumWl: "λ",
     labelLightType: "Light Source", lightShelf: "Shelf Top", lightParallel: "Parallel", lightPoint: "Point Light",
@@ -551,6 +553,7 @@ function toggleLanguage() {
 }
 
 function updateSliderFill(slider) {
+  if (!slider) return;
   const min = parseFloat(slider.min) || 0;
   const max = parseFloat(slider.max) || 100;
   const val = parseFloat(slider.value);
@@ -600,7 +603,6 @@ function toggleSystemParams() {
   }
 }
 
-// ✨ 切換 Tab 智慧區分：2D 視圖即時渲染，唯獨 Model 頁籤開啟加載體驗
 function switchTab(tabId, el) {
   currentTab = tabId;
   const group = document.getElementById('view-mode-group');
@@ -615,7 +617,6 @@ function switchTab(tabId, el) {
       renderAllViews();
     });
   } else {
-    // RAY, CAD, 3D 直接無縫極速刷新
     renderAllViews();
   }
 }
@@ -772,6 +773,31 @@ function updateSim() {
   const ca = document.getElementById('customAlpha');
   if (ca) state.customAlpha = parseFloat(ca.value);
 
+  // 微調動態拉桿（波浪/鋸齒為疏密漸變 -30~+30，其餘為旋轉角 0~60）
+  const twistLabelEl = document.getElementById('label-texTwist');
+  const twistInput = document.getElementById('texTwist');
+  if (twistLabelEl && twistInput) {
+    if (state.texture === 'sawtooth' || state.texture === 'wave') {
+      twistLabelEl.innerText = i18nDict[currentLang].labelWaveGrad || "疏密漸變微調:";
+      if (twistInput.min !== "-30") {
+        twistInput.min = "-30";
+        twistInput.max = "30";
+        twistInput.value = "0";
+        state.texTwist = 0;
+        updateSliderFill(twistInput);
+      }
+    } else {
+      twistLabelEl.innerText = i18nDict[currentLang].labelTwist || "條紋旋轉角:";
+      if (twistInput.min !== "0") {
+        twistInput.min = "0";
+        twistInput.max = "60";
+        twistInput.value = "0";
+        state.texTwist = 0;
+        updateSliderFill(twistInput);
+      }
+    }
+  }
+
   const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
   const unitDensity = currentLang === 'zh' ? ' 條/週' : ' ribs';
   setTxt('val-shoulderH', state.shoulderHeightMM + ' mm');
@@ -779,7 +805,17 @@ function updateSim() {
   setTxt('val-transPos', state.transPos + '%');
   setTxt('val-texDepth', state.texDepth + '%');
   setTxt('val-texDensity', state.texDensity + unitDensity);
-  setTxt('val-texTwist', state.texTwist + '°');
+
+  if (state.texture === 'sawtooth' || state.texture === 'wave') {
+    const valGrad = state.texTwist;
+    let textGrad = "均勻 (0)";
+    if (valGrad > 0) textGrad = `下密上疏 (+${valGrad})`;
+    else if (valGrad < 0) textGrad = `下疏上密 (${valGrad})`;
+    setTxt('val-texTwist', textGrad);
+  } else {
+    setTxt('val-texTwist', state.texTwist + '°');
+  }
+
   setTxt('val-incidentAngle', state.incidentAngle + '°');
   setTxt('val-lightPosX', state.lightPosX + ' px');
   setTxt('val-customN', state.customN);
@@ -816,11 +852,29 @@ function toggleBeamMode(isBeams) {
   updateSim();
 }
 
+// ✨ 修正亮點：切換分段按鈕時，同步更新並渲染拉桿背景顏色
 function setParam(key, val, el) {
   state[key] = val;
   const parent = el.parentElement;
   parent.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
+
+  const twistInput = document.getElementById('texTwist');
+  if (twistInput) {
+    if (val === 'sawtooth' || val === 'wave') {
+      twistInput.min = "-30";
+      twistInput.max = "30";
+      twistInput.value = "0";
+      state.texTwist = 0;
+    } else {
+      twistInput.min = "0";
+      twistInput.max = "60";
+      twistInput.value = "0";
+      state.texTwist = 0;
+    }
+    updateSliderFill(twistInput);
+  }
+
   updateSim();
 }
 
@@ -874,6 +928,14 @@ function fresnelR(n1, n2, cosi) {
   const Rs = Math.pow((n1 * cosi - n2 * cost) / (n1 * cosi + n2 * cost), 2);
   const Rp = Math.pow((n1 * cost - n2 * cosi) / (n1 * cost + n2 * cosi), 2);
   return { R: (Rs + Rp) / 2, tir: false };
+}
+
+// 6.5 版自適應平滑疏密漸變算式
+function getGradientPhase(t, baseDensity, gradVal) {
+  if (Math.abs(gradVal) < 0.5) return t * baseDensity;
+  const adaptiveScaling = Math.max(0.2, 12.0 / (baseDensity + 4.0));
+  const p = Math.pow(1.3, (gradVal / 30.0) * adaptiveScaling);
+  return Math.pow(t, p) * baseDensity;
 }
 
 function buildBottleGeometry(cx, topY, neckW, bodyW, bottomY) {
@@ -955,9 +1017,11 @@ function buildBottleGeometry(cx, topY, neckW, bodyW, bottomY) {
 
     if (state.texture !== 'smooth') {
       if (state.texture === 'sawtooth') {
-        texOffset = effAmpPx * triWave(t * state.texDensity);
+        const phase = getGradientPhase(t, state.texDensity, state.texTwist);
+        texOffset = effAmpPx * triWave(phase);
       } else if (state.texture === 'wave') {
-        texOffset = effAmpPx * Math.sin(t * Math.PI * state.texDensity * 2);
+        const phase = getGradientPhase(t, state.texDensity, state.texTwist);
+        texOffset = effAmpPx * Math.sin(phase * Math.PI * 2);
       } else if (state.texture === 'diamond') {
         const aspectMult = 1 + (state.texTwist - 30) / 60;
         texOffset = effAmpPx * triWave(t * state.texDensity * 2 * Math.max(0.2, aspectMult));
@@ -1422,9 +1486,10 @@ function renderCADViews(geo) {
       const frac = i / (shoulderPoints.length - 1);
       let ripple = 0;
       if (showRipple) {
+        const phase = getGradientPhase(frac, state.texDensity, state.texTwist);
         ripple = state.texture === 'sawtooth'
-          ? geo.effAmpPx * triWave(frac * state.texDensity)
-          : geo.effAmpPx * Math.sin(frac * Math.PI * state.texDensity * 2);
+          ? geo.effAmpPx * triWave(phase)
+          : geo.effAmpPx * Math.sin(phase * Math.PI * 2);
       }
       const x = c2x + (p.x + ripple) * 1.3;
       const y = c2y + (p.y - shoulderPoints[0].y) * 1.3 + 40;
@@ -1435,9 +1500,10 @@ function renderCADViews(geo) {
       const frac = i / (shoulderPoints.length - 1);
       let ripple = 0;
       if (showRipple) {
+        const phase = getGradientPhase(frac, state.texDensity, state.texTwist);
         ripple = state.texture === 'sawtooth'
-          ? geo.effAmpPx * triWave(frac * state.texDensity)
-          : geo.effAmpPx * Math.sin(frac * Math.PI * state.texDensity * 2);
+          ? geo.effAmpPx * triWave(phase)
+          : geo.effAmpPx * Math.sin(phase * Math.PI * 2);
       }
       const x = c2x - (p.x + ripple) * 1.3;
       const y = c2y + (p.y - shoulderPoints[0].y) * 1.3 + 40;
@@ -1473,9 +1539,8 @@ function renderCADViews(geo) {
     ctx.beginPath();
     for (let a = 0; a <= 360; a += 2) {
       const rad = (a * Math.PI) / 180;
-      const rMod = rBodyCAD + ampCAD * triWave((a / 360) * numRibs);
-      const x = c3x + rMod * Math.cos(rad);
-      const y = c3y + rMod * Math.sin(rad);
+      const x = c3x + (rBodyCAD + ampCAD * triWave((a / 360) * numRibs)) * Math.cos(rad);
+      const y = c3y + (rBodyCAD + ampCAD * triWave((a / 360) * numRibs)) * Math.sin(rad);
       a === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     }
     ctx.closePath(); ctx.stroke();
@@ -1652,10 +1717,11 @@ function renderIsometricView(geo) {
       const yMM = (shoulderSamples[shoulderSamples.length - 1].y - pt.y) / PX_PER_MM;
 
       let waveVal = 0;
+      const phase = getGradientPhase(frac, state.texDensity, state.texTwist);
       if (state.texture === 'sawtooth') {
-        waveVal = triWave(frac * texDensity);
+        waveVal = triWave(phase);
       } else if (state.texture === 'wave') {
-        waveVal = Math.sin(frac * Math.PI * texDensity * 2);
+        waveVal = Math.sin(phase * Math.PI * 2);
       }
 
       const isPeak = waveVal >= -0.05;
@@ -1697,10 +1763,11 @@ function renderIsometricView(geo) {
         const yMM = (shoulderSamples[shoulderSamples.length - 1].y - pt.y) / PX_PER_MM;
         let rMod = rBase;
 
+        const phase = getGradientPhase(frac, state.texDensity, state.texTwist);
         if (state.texture === 'sawtooth') {
-          rMod += texDepthMM * 0.5 * triWave(frac * texDensity);
+          rMod += texDepthMM * 0.5 * triWave(phase);
         } else if (state.texture === 'wave') {
-          rMod += texDepthMM * 0.5 * Math.sin(frac * Math.PI * texDensity * 2);
+          rMod += texDepthMM * 0.5 * Math.sin(phase * Math.PI * 2);
         }
 
         const p = project3D(rMod * Math.cos(baseAng), yMM, rMod * Math.sin(baseAng), cx, cy, scale);
@@ -1859,7 +1926,7 @@ function renderIsometricView(geo) {
   ctx.restore();
 }
 
-/* ✨ 真 3D STL 高滑順 Model 渲染引擎 (消除方塊感) */
+/* ✨ 真 3D Model 渲染引擎 (100% 恢復 index.html 最穩定的鑽石紋 3D 演算法) */
 function initThreeScene() {
   const container = document.getElementById('three-container');
   if (!container || isThreeInitialized) return;
@@ -1940,13 +2007,16 @@ function renderSTLView(geo) {
       let rMod = rBase;
 
       if (state.texture === 'sawtooth') {
-        rMod += texDepthMM * 0.5 * triWave(frac * texDensity);
+        const phase = getGradientPhase(frac, state.texDensity, state.texTwist);
+        rMod += texDepthMM * 0.5 * triWave(phase);
       } else if (state.texture === 'wave') {
-        rMod += texDepthMM * 0.5 * Math.sin(frac * Math.PI * texDensity * 2);
+        const phase = getGradientPhase(frac, state.texDensity, state.texTwist);
+        rMod += texDepthMM * 0.5 * Math.sin(phase * Math.PI * 2);
       } else if (state.texture === 'vertical') {
         const curAng = angle + frac * twistRadTotal;
         rMod += texDepthMM * 0.5 * Math.cos(texDensity * curAng);
       } else if (state.texture === 'diamond') {
+        // ✨ 100% 恢復原版 index.html 鑽石紋經典算式
         const numDiamondRows = texDensity * 2;
         const numDiamondCols = texDensity * 2;
         const twistOffset = frac * (state.texTwist * Math.PI / 180);
