@@ -158,20 +158,32 @@
 </head>
 <body class="flex flex-col h-screen w-screen overflow-hidden">
 
-  <!-- 頂部 Header -->
+  <!-- 頂部 Header (已替換為 vormb 風格) -->
   <header class="h-11 px-6 flex items-center justify-between border-b border-slate-800/40 bg-[#05070a] shrink-0">
     <div class="flex items-center gap-3">
       <span class="text-lg font-black tracking-widest text-slate-100">VORMA</span>
     </div>
-    <button onclick="toggleLanguage()" class="text-xs px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition-all font-mono">
-      🌐 <span id="langBtnText">EN</span>
-    </button>
+
+    <!-- 右側功能選單與小巧語言切換鈕 -->
+    <div class="flex items-center gap-3">
+      <!-- 網格功能切換選單 (中英文純淨切換) -->
+      <select id="moduleSelect" onchange="navigateModule(this.value)" class="bg-slate-900 border border-slate-700 text-slate-200 text-xs py-1 px-2 rounded-lg font-bold w-auto cursor-pointer focus:border-blue-500">
+        <option value="bottle" selected data-i18n="optBottle">瓶形</option>
+        <option value="light" data-i18n="optLight">光照</option>
+        <option value="stack" data-i18n="optStack">堆棧</option>
+      </select>
+
+      <!-- 小巧圓角中英切換按鈕 -->
+      <button onclick="toggleLanguage()" class="text-xs px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition-all font-mono">
+        <span id="langBtnText">EN</span>
+      </button>
+    </div>
   </header>
 
   <!-- 主體三欄 Layout -->
   <main class="flex-1 flex overflow-hidden p-4 gap-5 bg-[#05070a]">
 
-    <!-- 左側邊欄 -->
+    <!-- 左側邊欄 (完全維持不動) -->
     <aside class="w-16 shrink-0 flex flex-col items-center py-2 gap-5">
       <div class="flex flex-col items-center gap-1.5">
         <span class="text-[10px] text-slate-400 font-medium">Beams</span>
@@ -470,6 +482,9 @@ let viewTransform = {
 
 const i18nDict = {
   zh: {
+    optBottle: "瓶形",
+    optLight: "光照",
+    optStack: "堆棧",
     juiceDoseLabel: "內容物接收 UV 劑量:",
     petLossLabel: "PET 反射 + 吸收:",
     juiceDoseAvgLabel: "0-60° 掃描平均劑量",
@@ -503,6 +518,9 @@ const i18nDict = {
     labelCustomN: "折射率 (n):", labelCustomAlpha: "吸收率 (α):"
   },
   en: {
+    optBottle: "Bottle",
+    optLight: "Lighting",
+    optStack: "Pallet Stacking",
     juiceDoseLabel: "Drink UV Dose:",
     petLossLabel: "PET Reflect + Absorb:",
     juiceDoseAvgLabel: "0-60° Scan Avg Dose",
@@ -550,6 +568,16 @@ function toggleLanguage() {
   });
 
   updateSim();
+}
+
+function navigateModule(value) {
+  if (value === 'bottle') {
+    window.location.href = 'https://tsaiyilin1997.github.io/Vorm/';
+  } else if (value === 'light') {
+    window.location.href = 'https://tsaiyilin1997.github.io/Vorma/';
+  } else if (value === 'stack') {
+    window.location.href = 'https://tsaiyilin1997.github.io/Vormb/';
+  }
 }
 
 function updateSliderFill(slider) {
@@ -773,7 +801,7 @@ function updateSim() {
   const ca = document.getElementById('customAlpha');
   if (ca) state.customAlpha = parseFloat(ca.value);
 
-  // 微調動態拉桿（波浪/鋸齒為疏密漸變 -30~+30，其餘為旋轉角 0~60）
+  // 微調動態拉桿
   const twistLabelEl = document.getElementById('label-texTwist');
   const twistInput = document.getElementById('texTwist');
   if (twistLabelEl && twistInput) {
@@ -852,7 +880,6 @@ function toggleBeamMode(isBeams) {
   updateSim();
 }
 
-// ✨ 修正亮點：切換分段按鈕時，同步更新並渲染拉桿背景顏色
 function setParam(key, val, el) {
   state[key] = val;
   const parent = el.parentElement;
@@ -930,7 +957,6 @@ function fresnelR(n1, n2, cosi) {
   return { R: (Rs + Rp) / 2, tir: false };
 }
 
-// 6.5 版自適應平滑疏密漸變算式
 function getGradientPhase(t, baseDensity, gradVal) {
   if (Math.abs(gradVal) < 0.5) return t * baseDensity;
   const adaptiveScaling = Math.max(0.2, 12.0 / (baseDensity + 4.0));
@@ -1926,7 +1952,14 @@ function renderIsometricView(geo) {
   ctx.restore();
 }
 
-/* ✨ 真 3D Model 渲染引擎 (100% 恢復 index.html 最穩定的鑽石紋 3D 演算法) */
+/* 按需單幀繪製 Three.js */
+function renderThreeFrame() {
+  if (threeRenderer && threeScene && threeCamera && currentTab === 'stlTab') {
+    threeRenderer.render(threeScene, threeCamera);
+  }
+}
+
+/* 初始化 Three.js (改為切換時按需開啟渲染，降低計算開銷) */
 function initThreeScene() {
   const container = document.getElementById('three-container');
   if (!container || isThreeInitialized) return;
@@ -1938,15 +1971,17 @@ function initThreeScene() {
   threeCamera = new THREE.PerspectiveCamera(45, w / h, 0.1, 1000);
   threeCamera.position.set(0, 40, 110);
 
-  threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
   threeRenderer.setSize(w, h);
-  threeRenderer.setPixelRatio(window.devicePixelRatio || 1);
+  threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   container.appendChild(threeRenderer.domElement);
 
   threeControls = new THREE.OrbitControls(threeCamera, threeRenderer.domElement);
-  threeControls.enableDamping = true;
-  threeControls.dampingFactor = 0.05;
+  threeControls.enableDamping = false;
   threeControls.target.set(0, state.shoulderHeightMM / 2, 0);
+
+  // 僅當視角拖動變更時觸發渲染
+  threeControls.addEventListener('change', renderThreeFrame);
 
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   threeScene.add(ambientLight);
@@ -1964,18 +1999,10 @@ function initThreeScene() {
   threeScene.add(gridHelper);
 
   isThreeInitialized = true;
-
-  function animate() {
-    requestAnimationFrame(animate);
-    if (threeControls) threeControls.update();
-    if (threeRenderer && threeScene && threeCamera) {
-      threeRenderer.render(threeScene, threeCamera);
-    }
-  }
-  animate();
 }
 
 function renderSTLView(geo) {
+  if (currentTab !== 'stlTab') return;
   if (!isThreeInitialized) initThreeScene();
   if (!threeScene) return;
 
@@ -2016,7 +2043,6 @@ function renderSTLView(geo) {
         const curAng = angle + frac * twistRadTotal;
         rMod += texDepthMM * 0.5 * Math.cos(texDensity * curAng);
       } else if (state.texture === 'diamond') {
-        // ✨ 100% 恢復原版 index.html 鑽石紋經典算式
         const numDiamondRows = texDensity * 2;
         const numDiamondCols = texDensity * 2;
         const twistOffset = frac * (state.texTwist * Math.PI / 180);
@@ -2071,7 +2097,10 @@ function renderSTLView(geo) {
 
   if (threeControls) {
     threeControls.target.set(0, state.shoulderHeightMM / 2, 0);
+    threeControls.update();
   }
+
+  renderThreeFrame();
 }
 
 function renderAllViews() {
@@ -2102,7 +2131,10 @@ function renderAllViews() {
   renderOpticalSim(geo);
   renderCADViews(geo);
   renderIsometricView(geo);
-  renderSTLView(geo);
+  
+  if (currentTab === 'stlTab') {
+    renderSTLView(geo);
+  }
 }
 
 window.onload = function() {
