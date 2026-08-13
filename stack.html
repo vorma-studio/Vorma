@@ -126,6 +126,27 @@
       box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
     }
 
+    /* 匯出圖檔按鈕樣式 */
+    .export-btn {
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 9999px;
+      background-color: rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .export-btn:hover {
+      background-color: #2563eb;
+      border-color: #60a5fa;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+    }
+
     canvas { display: block; outline: none; }
     .view-panel { width: 100%; height: 100%; }
     #webglContainer { width: 100% !important; height: 100% !important; background: #05070a; }
@@ -185,6 +206,16 @@
         <!-- Tab 1: 2D 棧板上視排版圖 -->
         <div id="opticsTab" class="view-panel flex flex-col items-center justify-center relative">
           
+          <!-- 左上角：匯出黑白 JPG 圖案按鈕 (向下箭頭圖示) -->
+          <div class="absolute top-2 left-2 z-10">
+            <button class="export-btn" onclick="export2DBlackWhiteJPG()" title="匯出黑白平面圖 JPG">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+              </svg>
+              <span>JPG</span>
+            </button>
+          </div>
+
           <!-- 右上角：層數切換按鈕（英文 ODD/EVEN） -->
           <div class="absolute top-2 right-2 z-10 flex items-center gap-1.5 py-1 px-2 text-xs">
             <span class="text-slate-400 text-[11px] mr-1 font-mono">Layer:</span>
@@ -206,7 +237,7 @@
         </div>
       </div>
 
-      <!-- 底部左側數據摘要 Bar（樣式同來源 [3]） -->
+      <!-- 底部左側數據摘要 Bar（精確至小數點後一位） -->
       <div class="z-10 flex gap-10 text-xs px-0 pb-2">
         <div>
           <div class="text-[11px] text-blue-400 font-semibold">單層箱數 / 總箱數</div>
@@ -217,7 +248,7 @@
         <div>
           <div class="text-[11px] text-emerald-400 font-semibold">可疊層數 (總高) / 第一層長寬</div>
           <div class="text-base font-bold text-emerald-400 font-mono mt-0.5">
-            <span id="stat-layersInfo">0 層 (0 cm)</span> | <span id="stat-boxTotalDim">0 × 0 cm</span>
+            <span id="stat-layersInfo">0 層 (0.0 cm)</span> | <span id="stat-boxTotalDim">0.0 × 0.0 cm</span>
           </div>
         </div>
       </div>
@@ -231,7 +262,7 @@
           <div>
             <div class="text-xs font-bold text-slate-900 uppercase tracking-wider" data-i18n="cardTitle1">輸入箱子尺寸與限制</div>
             <div class="text-[11px] text-slate-500 mt-0.5">
-              <span data-i18n="lblL">長</span>: <span id="sum-l">40</span> cm | <span data-i18n="lblW">寬</span>: <span id="sum-w">30</span> cm | <span data-i18n="lblH">高</span>: <span id="sum-h">25</span> cm
+              <span data-i18n="lblL">長</span>: <span id="sum-l">40.0</span> cm | <span data-i18n="lblW">寬</span>: <span id="sum-w">30.0</span> cm | <span data-i18n="lblH">高</span>: <span id="sum-h">25.0</span> cm
             </div>
           </div>
           <span class="arrow-icon text-slate-500 text-xs transition-transform duration-300 rotate-180">▲</span>
@@ -242,21 +273,21 @@
             <div>
               <label class="text-xs font-semibold text-slate-700 block mb-1" data-i18n="boxL">箱子長 (L):</label>
               <div class="flex items-center gap-1">
-                <input type="number" id="boxL" value="40" min="5" max="120" step="1" oninput="updatePacking()">
+                <input type="number" id="boxL" value="40" min="5" max="120" step="0.1" oninput="updatePacking()">
                 <span class="text-[10px] text-slate-600 font-mono">cm</span>
               </div>
             </div>
             <div>
               <label class="text-xs font-semibold text-slate-700 block mb-1" data-i18n="boxW">箱子寬 (W):</label>
               <div class="flex items-center gap-1">
-                <input type="number" id="boxW" value="30" min="5" max="100" step="1" oninput="updatePacking()">
+                <input type="number" id="boxW" value="30" min="5" max="100" step="0.1" oninput="updatePacking()">
                 <span class="text-[10px] text-slate-600 font-mono">cm</span>
               </div>
             </div>
             <div>
               <label class="text-xs font-semibold text-slate-700 block mb-1" data-i18n="boxH">箱子高 (H):</label>
               <div class="flex items-center gap-1">
-                <input type="number" id="boxH" value="25" min="5" max="120" step="1" oninput="updatePacking()">
+                <input type="number" id="boxH" value="25" min="5" max="120" step="0.1" oninput="updatePacking()">
                 <span class="text-[10px] text-slate-600 font-mono">cm</span>
               </div>
             </div>
@@ -265,8 +296,8 @@
           <div class="pt-2 border-t border-slate-300/80 space-y-2">
             <div class="text-[11px] font-bold text-slate-800 uppercase tracking-wider" data-i18n="envTitle">環境與限制參數</div>
             <div class="grid grid-cols-2 gap-4 text-xs text-slate-700 bg-slate-100 p-3 rounded-xl">
-              <div><span data-i18n="palletDim">棧板面積</span>: <b class="font-mono text-slate-900">120 × 100 cm</b></div>
-              <div><span data-i18n="maxH">高度上限</span>: <b class="font-mono text-slate-900">120 cm</b></div>
+              <div><span data-i18n="palletDim">棧板面積</span>: <b class="font-mono text-slate-900">120.0 × 100.0 cm</b></div>
+              <div><span data-i18n="maxH">高度上限</span>: <b class="font-mono text-slate-900">120.0 cm</b></div>
             </div>
           </div>
         </div>
@@ -298,7 +329,7 @@
         Maximal-Rectangle Engine
       </span>
       <span>|</span>
-      <span>Max Height: 120cm | Pallet: 120x100cm</span>
+      <span>Max Height: 120.0cm | Pallet: 120.0x100.0cm</span>
     </div>
   </footer>
 
@@ -609,8 +640,8 @@ function calculateInterlockScore(currentBoxes, previousBoxes) {
   let crossBonus = Math.min(1.0, crossSupportCount / currentBoxes.length);
 
   return {
-    support: Math.round(supportRatio * 100),
-    interlock: Math.round((interlockRatio * 0.5 + crossBonus * 0.5) * 100)
+    support: (supportRatio * 100).toFixed(1),
+    interlock: ((interlockRatio * 0.5 + crossBonus * 0.5) * 100).toFixed(1)
   };
 }
 
@@ -625,7 +656,7 @@ function findBestLayerSequence(patterns, maxLayers) {
     for (let b of patterns) {
       let mBonA = calculateInterlockScore(b.boxes, a.boxes);
       let mAonB = calculateInterlockScore(a.boxes, b.boxes);
-      let pairScore = (a.boxes.length + b.boxes.length) * 2000 + (mBonA.support + mAonB.support) * 15 + (mBonA.interlock + mAonB.interlock) * 90;
+      let pairScore = (a.boxes.length + b.boxes.length) * 2000 + (parseFloat(mBonA.support) + parseFloat(mAonB.support)) * 15 + (parseFloat(mBonA.interlock) + parseFloat(mAonB.interlock)) * 90;
 
       if (pairScore > bestPairScore) {
         bestPairScore = pairScore;
@@ -652,8 +683,8 @@ function calculateBestPacking(l, w, h) {
   bestLayerBoxes.forEach((lay, idx) => {
     totalBoxes += lay.length;
     let metrics = idx === 0 ? { support: 100, interlock: 100 } : calculateInterlockScore(lay, bestLayerBoxes[idx - 1]);
-    totalSupport += metrics.support;
-    totalInterlock += metrics.interlock;
+    totalSupport += parseFloat(metrics.support);
+    totalInterlock += parseFloat(metrics.interlock);
   });
 
   // 第一層擺放後的實際最大長寬
@@ -671,12 +702,12 @@ function calculateBestPacking(l, w, h) {
     perLayer: bestLayerBoxes[0]?.length || 0,
     maxLayers: maxLayers,
     totalBoxes: totalBoxes,
-    stackHeight: maxLayers * h,
-    totalSpanL: Math.round(maxX),
-    totalSpanW: Math.round(maxY),
+    stackHeight: (maxLayers * h).toFixed(1),
+    totalSpanL: maxX.toFixed(1),
+    totalSpanW: maxY.toFixed(1),
     utilization: ((l * w * h * totalBoxes) / (PALLET_L * PALLET_W * MAX_H) * 100).toFixed(1),
     orientation: `Maximal-Rectangle 智慧交錯序列`,
-    interlockScore: Math.round(totalInterlock / maxLayers),
+    interlockScore: (totalInterlock / maxLayers).toFixed(1),
     arrangementSize: { width: PALLET_L, depth: PALLET_W, height: maxLayers * h }
   };
 }
@@ -689,21 +720,21 @@ function renderAll() {
   const w = parseFloat(document.getElementById('boxW').value) || 30;
   const h = parseFloat(document.getElementById('boxH').value) || 25;
 
-  document.getElementById('sum-l').innerText = l;
-  document.getElementById('sum-w').innerText = w;
-  document.getElementById('sum-h').innerText = h;
+  document.getElementById('sum-l').innerText = l.toFixed(1);
+  document.getElementById('sum-w').innerText = w.toFixed(1);
+  document.getElementById('sum-h').innerText = h.toFixed(1);
 
   currentPlan = calculateBestPacking(l, w, h);
 
   if (!currentPlan || currentPlan.totalBoxes <= 0) {
     document.getElementById('stat-perLayer').innerText = '0 箱';
     document.getElementById('stat-totalBoxes').innerText = '0 箱';
-    document.getElementById('stat-layersInfo').innerText = '0 層 (0 cm)';
-    document.getElementById('stat-boxTotalDim').innerText = '0 × 0 cm';
+    document.getElementById('stat-layersInfo').innerText = '0 層 (0.0 cm)';
+    document.getElementById('stat-boxTotalDim').innerText = '0.0 × 0.0 cm';
     return;
   }
 
-  // 左下角兩欄看板數據（風格完全比照 index (2)）
+  // 左下角兩欄看板數據（精確至小數點後一位）
   document.getElementById('stat-perLayer').innerText = `${currentPlan.perLayer} ${dict.unitBoxes}`;
   document.getElementById('stat-totalBoxes').innerText = `${currentPlan.totalBoxes} ${dict.unitBoxes}`;
   document.getElementById('stat-layersInfo').innerText = `${currentPlan.maxLayers} 層 (${currentPlan.stackHeight} cm)`;
@@ -725,7 +756,7 @@ function renderAll() {
   }
 }
 
-/* 繪製帶箭頭的 2D 雙向尺寸標註線 */
+/* 繪製帶箭頭的 2D 雙向尺寸標註線 (支援小數點後一位) */
 function drawDimensionLine(ctx, x1, y1, x2, y2, text, isVertical = false) {
   ctx.save();
   ctx.strokeStyle = '#facc15';
@@ -749,7 +780,7 @@ function drawDimensionLine(ctx, x1, y1, x2, y2, text, isVertical = false) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillStyle = 'rgba(5, 7, 10, 0.85)';
-    ctx.fillRect(midX - 35, y1 + 3, 70, 16);
+    ctx.fillRect(midX - 40, y1 + 3, 80, 16);
     ctx.fillStyle = '#facc15';
     ctx.fillText(text, midX, y1 + 5);
   } else {
@@ -762,7 +793,7 @@ function drawDimensionLine(ctx, x1, y1, x2, y2, text, isVertical = false) {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = 'rgba(5, 7, 10, 0.85)';
-    ctx.fillRect(x1 + 4, midY - 9, 65, 18);
+    ctx.fillRect(x1 + 4, midY - 9, 75, 18);
     ctx.fillStyle = '#facc15';
     ctx.fillText(text, x1 + 8, midY);
   }
@@ -813,15 +844,15 @@ function render2DPalllet(plan) {
       ctx.fillText(`#${b.label}`, bx + bw / 2, by + bh / 2 - 3);
       ctx.fillStyle = '#fde047';
       ctx.font = 'bold 9px monospace';
-      ctx.fillText(`${b.width}×${b.height}`, bx + bw / 2, by + bh / 2 + 8);
+      ctx.fillText(`${b.width.toFixed(1)}×${b.height.toFixed(1)}`, bx + bw / 2, by + bh / 2 + 8);
     } else {
       ctx.fillText(`#${b.label}`, bx + bw / 2, by + bh / 2 + 3);
     }
   });
 
-  if (showDimensions && plan.totalSpanL > 0 && plan.totalSpanW > 0) {
-    const spanLPx = plan.totalSpanL * scale;
-    const spanWPx = plan.totalSpanW * scale;
+  if (showDimensions && parseFloat(plan.totalSpanL) > 0 && parseFloat(plan.totalSpanW) > 0) {
+    const spanLPx = parseFloat(plan.totalSpanL) * scale;
+    const spanWPx = parseFloat(plan.totalSpanW) * scale;
 
     ctx.strokeStyle = 'rgba(250, 204, 21, 0.4)';
     ctx.setLineDash([3, 3]);
@@ -839,6 +870,122 @@ function render2DPalllet(plan) {
   }
 
   ctx.restore();
+}
+
+/* 匯出 2D 平面排版黑白 JPG 圖稿 */
+function export2DBlackWhiteJPG() {
+  if (!currentPlan) return;
+
+  const exportCanvas = document.createElement('canvas');
+  const w = 1200, h = 1000;
+  exportCanvas.width = w; exportCanvas.height = h;
+  const ctx = exportCanvas.getContext('2d');
+
+  // 白底黑線
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, w, h);
+
+  const targetLayerIdx = (selectedLayerType === 'even' && currentPlan.layers.length > 1) ? 1 : 0;
+  const targetLayerBoxes = currentPlan.layers[targetLayerIdx].boxes;
+
+  const scale = 7.0;
+  const pWidthPx = PALLET_L * scale;
+  const pHeightPx = PALLET_W * scale;
+
+  const startX = (w - pWidthPx) / 2;
+  const startY = (h - pHeightPx) / 2 - 20;
+
+  // 1. 畫棧板外邊框 (虛線)
+  ctx.strokeStyle = '#000000';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 6]);
+  ctx.strokeRect(startX, startY, pWidthPx, pHeightPx);
+  ctx.setLineDash([]);
+
+  // 棧板尺寸文字標記
+  ctx.fillStyle = '#000000';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`PALLET: 120.0 × 100.0 cm (${selectedLayerType.toUpperCase()} LAYER)`, w / 2, startY - 20);
+
+  // 2. 畫紙箱白底黑線
+  targetLayerBoxes.forEach((b, idx) => {
+    const bx = startX + b.x * scale;
+    const by = startY + b.y * scale;
+    const bw = b.width * scale;
+    const bh = b.height * scale;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(bx, by, bw, bh);
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(bx, by, bw, bh);
+
+    // 文字
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 16px monospace';
+    ctx.textAlign = 'center';
+
+    if (showDimensions && idx === 0) {
+      ctx.fillText(`#${b.label}`, bx + bw / 2, by + bh / 2 - 6);
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText(`${b.width.toFixed(1)}×${b.height.toFixed(1)}`, bx + bw / 2, by + bh / 2 + 14);
+    } else {
+      ctx.fillText(`#${b.label}`, bx + bw / 2, by + bh / 2 + 5);
+    }
+  });
+
+  // 3. 畫尺寸標註線 (純黑)
+  if (showDimensions && parseFloat(currentPlan.totalSpanL) > 0 && parseFloat(currentPlan.totalSpanW) > 0) {
+    const spanLPx = parseFloat(currentPlan.totalSpanL) * scale;
+    const spanWPx = parseFloat(currentPlan.totalSpanW) * scale;
+
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 1.5;
+
+    // 水平標註 (總長)
+    const lineY = startY + spanWPx + 35;
+    ctx.beginPath();
+    ctx.moveTo(startX, lineY); ctx.lineTo(startX + spanLPx, lineY);
+    ctx.moveTo(startX, startY + spanWPx + 10); ctx.lineTo(startX, lineY + 10);
+    ctx.moveTo(startX + spanLPx, startY + spanWPx + 10); ctx.lineTo(startX + spanLPx, lineY + 10);
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(startX + spanLPx / 2 - 40, lineY - 10, 80, 20);
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 15px monospace';
+    ctx.fillText(`${currentPlan.totalSpanL} cm`, startX + spanLPx / 2, lineY + 5);
+
+    // 垂直標註 (總寬)
+    const lineX = startX + spanLPx + 35;
+    ctx.beginPath();
+    ctx.moveTo(lineX, startY); ctx.lineTo(lineX, startY + spanWPx);
+    ctx.moveTo(startX + spanLPx + 10, startY); ctx.lineTo(lineX + 10, startY);
+    ctx.moveTo(startX + spanLPx + 10, startY + spanWPx); ctx.lineTo(lineX + 10, startY + spanWPx);
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(lineX - 10, startY + spanWPx / 2 - 12, 80, 24);
+    ctx.fillStyle = '#000000';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${currentPlan.totalSpanW} cm`, lineX - 5, startY + spanWPx / 2 + 5);
+  }
+
+  // 底部統計資訊
+  ctx.fillStyle = '#000000';
+  ctx.font = 'bold 15px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`Per Layer: ${currentPlan.perLayer} boxes | Total: ${currentPlan.totalBoxes} boxes | Layers: ${currentPlan.maxLayers} (${currentPlan.stackHeight} cm)`, w / 2, h - 40);
+
+  // 下載 JPG
+  const dataURL = exportCanvas.toDataURL('image/jpeg', 0.95);
+  const link = document.createElement('a');
+  link.download = `pallet-layout-${selectedLayerType}.jpg`;
+  link.href = dataURL;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 /* 實體投影計算 */
@@ -1133,26 +1280,26 @@ function update3DPalllet(plan) {
 
   // 3D 空間動態尺寸標註（當開關開啟時顯示）
   if (showDimensions && plan) {
-    const spanL = plan.totalSpanL; // 第一層實際擺放總長
-    const spanW = plan.totalSpanW; // 第一層實際擺放總寬
-    const totalH = plan.stackHeight; // 實際總高
+    const spanL = parseFloat(plan.totalSpanL); // 第一層實際擺放總長
+    const spanW = parseFloat(plan.totalSpanW); // 第一層實際擺放總寬
+    const totalH = parseFloat(plan.stackHeight); // 實際總高
 
     const startX = -PALLET_L / 2;
     const startZ = -PALLET_W / 2;
 
-    // 1. 第一層長標註 (以第一層實際擺放總長為主)
+    // 1. 第一層長標註
     const dimL = create3DDimensionLine(
       new THREE.Vector3(startX, 0, startZ + spanW + 15),
       new THREE.Vector3(startX + spanL, 0, startZ + spanW + 15),
-      `${spanL} cm`
+      `${spanL.toFixed(1)} cm`
     );
     palletGroup3D.add(dimL);
 
-    // 2. 第一層寬標註 (以第一層實際擺放總寬為主)
+    // 2. 第一層寬標註
     const dimW = create3DDimensionLine(
       new THREE.Vector3(startX + spanL + 15, 0, startZ),
       new THREE.Vector3(startX + spanL + 15, 0, startZ + spanW),
-      `${spanW} cm`
+      `${spanW.toFixed(1)} cm`
     );
     palletGroup3D.add(dimW);
 
@@ -1160,7 +1307,7 @@ function update3DPalllet(plan) {
     const dimH = create3DDimensionLine(
       new THREE.Vector3(startX, 0, startZ + spanW + 18),
       new THREE.Vector3(startX, totalH, startZ + spanW + 18),
-      `${plan.maxLayers}層 ${totalH}cm`
+      `${plan.maxLayers}層 ${totalH.toFixed(1)}cm`
     );
     palletGroup3D.add(dimH);
   }
