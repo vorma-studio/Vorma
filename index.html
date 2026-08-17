@@ -1138,6 +1138,10 @@ function traceRayV17(p0, d0, polygons, fillY, derivedFacetDeg) {
   const norm = Math.hypot(d[0], d[1]) || 1; d = [d[0] / norm, d[1] / norm];
 
   const path = [[p[0], p[1]]];
+  // segEnergies[s] = 這條光線在 path[s]->path[s+1] 這一段「實際還剩多少能量」
+  // (相對入射光=1.0)，供畫面渲染用，跟 juiceDose/reflectedEnergy 等統計量分開算，
+  // 這樣畫出來的光束亮度才會反映真實穿透率，而不是只看光源位置的高斯權重。
+  const segEnergies = [];
   let currentEnergy = 1.0;
   let reflectedEnergy = 0.0;
   let absorbedPET = 0.0;
@@ -1166,11 +1170,12 @@ function traceRayV17(p0, d0, polygons, fillY, derivedFacetDeg) {
 
   if (bestT1 === null) {
     path.push([p[0] + d[0] * 600, p[1] + d[1] * 600]);
-    return { path, juiceDose: 0, reflectedEnergy: 0, absorbedPET: 0, hit: false };
+    return { path, juiceDose: 0, reflectedEnergy: 0, absorbedPET: 0, hit: false, segEnergies };
   }
 
   const hit1 = [p[0] + d[0] * bestT1, p[1] + d[1] * bestT1];
   path.push(hit1);
+  segEnergies.push(1.0); // 進瓶壁前，在空氣中，能量還是滿的
 
   const ed1 = [bestEdge1.b[0] - bestEdge1.a[0], bestEdge1.b[1] - bestEdge1.a[1]];
   let nrm1 = [-ed1[1], ed1[0]];
@@ -1187,7 +1192,8 @@ function traceRayV17(p0, d0, polygons, fillY, derivedFacetDeg) {
 
   if (tir1) {
     path.push([hit1[0] + d[0] * 100, hit1[1] - d[1] * 100]);
-    return { path, juiceDose: 0, reflectedEnergy: 1.0, absorbedPET: 0, hit: true };
+    segEnergies.push(1.0); // 全反射，光子沒有損失，只是換了方向
+    return { path, juiceDose: 0, reflectedEnergy: 1.0, absorbedPET: 0, hit: true, segEnergies };
   }
 
   const eta1 = MAT_AIR.n / MAT_PET.n;
@@ -1207,17 +1213,21 @@ function traceRayV17(p0, d0, polygons, fillY, derivedFacetDeg) {
 
   if (bestT2 === null) {
     path.push([hit1[0] + dPET[0] * 300, hit1[1] + dPET[1] * 300]);
-    return { path, juiceDose: 0, reflectedEnergy, absorbedPET: 0, hit: false };
+    segEnergies.push(currentEnergy); // 進了 PET (已扣 R1)，但沒算吸收就跑出畫面範圍
+    return { path, juiceDose: 0, reflectedEnergy, absorbedPET: 0, hit: false, segEnergies };
   }
 
   const hit2 = [hit1[0] + dPET[0] * bestT2, hit1[1] + dPET[1] * bestT2];
-  path.push(hit2);
+  const energyEnterPET = currentEnergy; // 已扣 R1 反射，尚未扣 PET 吸收
 
   const L_pet = bestT2 / PX_PER_MM;
   const alphaPET = MAT_PET.getAlpha(state.wavelength);
   const petAtt = Math.exp(-alphaPET * L_pet);
   absorbedPET = currentEnergy * (1 - petAtt);
   currentEnergy *= petAtt;
+
+  path.push(hit2);
+  segEnergies.push((energyEnterPET + currentEnergy) / 2); // 這段在 PET 壁內，取穿越前後的平均能量
 
   const isJuiceTarget = hit2[1] >= fillY;
   const targetMedium = isJuiceTarget ? drinkMat : MAT_AIR;
@@ -1236,7 +1246,8 @@ function traceRayV17(p0, d0, polygons, fillY, derivedFacetDeg) {
   if (tir2) {
     const refDPET = [dPET[0] + 2 * cosi2 * nrm2[0], dPET[1] + 2 * cosi2 * nrm2[1]];
     path.push([hit2[0] + refDPET[0] * 120, hit2[1] + refDPET[1] * 120]);
-    return { path, juiceDose: 0, reflectedEnergy, absorbedPET, hit: true };
+    segEnergies.push(currentEnergy); // 內壁全反射，光子留在 PET 裡繼續走，能量不變
+    return { path, juiceDose: 0, reflectedEnergy, absorbedPET, hit: true, segEnergies };
   }
 
   const entryEnergy = currentEnergy * (1 - R2);
@@ -1268,25 +1279,30 @@ function traceRayV17(p0, d0, polygons, fillY, derivedFacetDeg) {
     juiceDose = res.absorbed; // 這裡的 juiceDose = 果汁「實際吸收」到的 UV 劑量（相對入射光=1.0的比例）
     liquidPathMM = res.Lmm;
     path.push(res.exitPt);
+    segEnergies.push((entryEnergy + (entryEnergy - juiceDose)) / 2); // 穿過果汁那段，取吸收前後平均能量
   } else {
     if (dTarget[1] > 0) {
       const tLiquid = (fillY - hit2[1]) / dTarget[1];
       if (tLiquid > 0 && tLiquid < 400) {
         const entryPt = [hit2[0] + dTarget[0] * tLiquid, fillY];
         path.push(entryPt);
+        segEnergies.push(entryEnergy); // 這段還在空氣中（瓶內、液面上方），沒有吸收
         const res = absorbInLiquid(entryPt, entryEnergy);
         juiceDose = res.absorbed;
         liquidPathMM = res.Lmm;
         path.push(res.exitPt);
+        segEnergies.push((entryEnergy + (entryEnergy - juiceDose)) / 2);
       } else {
         path.push([hit2[0] + dTarget[0] * 200, hit2[1] + dTarget[1] * 200]);
+        segEnergies.push(entryEnergy); // 沒有進液體，能量維持不變
       }
     } else {
       path.push([hit2[0] + dTarget[0] * 200, hit2[1] + dTarget[1] * 200]);
+      segEnergies.push(entryEnergy);
     }
   }
 
-  return { path, juiceDose, reflectedEnergy, absorbedPET, hit: true, liquidPathMM };
+  return { path, juiceDose, reflectedEnergy, absorbedPET, hit: true, liquidPathMM, segEnergies };
 }
 
 function applyTransform(ctx) {
@@ -1402,7 +1418,7 @@ function renderOpticalSim(geo) {
       totalReflectedE += res.reflectedEnergy * ray.weight;
       totalAbsPETE += res.absorbedPET * ray.weight;
     }
-    tracedRays.push({ hit: res.hit, path: res.path, juiceDose: res.juiceDose, weight: ray.weight });
+    tracedRays.push({ hit: res.hit, path: res.path, juiceDose: res.juiceDose, weight: ray.weight, segEnergies: res.segEnergies || [] });
   });
 
   if (state.rayRenderMode === 'beams') {
@@ -1411,7 +1427,9 @@ function renderOpticalSim(geo) {
     else if (state.wavelength === 405) primaryBeamRGB = '34, 211, 238';
     else if (state.wavelength === 550) primaryBeamRGB = '74, 222, 128';
 
-    ctx.globalCompositeOperation = 'lighter';
+    // 'screen' 是飽和式疊色（1-(1-a)(1-b)...），跟原本的 'lighter'（純相加，
+    // 疊越多層就線性越亮、沒有上限）不同：疊色次數越多時邊際增益會遞減。
+    ctx.globalCompositeOperation = 'screen';
     for (let i = 0; i < tracedRays.length - 1; i++) {
       const r1 = tracedRays[i];
       const r2 = tracedRays[i + 1];
@@ -1423,14 +1441,20 @@ function renderOpticalSim(geo) {
         const p2A = r2.path[s], p2B = r2.path[s + 1];
         const avgDose = (r1.juiceDose + r2.juiceDose) / 2;
         const avgWeight = (r1.weight + r2.weight) / 2;
+        // 這條光線在「這一段路徑」實際還剩多少能量（已經扣掉 Fresnel 反射、
+        // PET 吸收、果汁吸收），而不是只看光源位置的高斯權重。
+        const e1 = (r1.segEnergies && r1.segEnergies[s] !== undefined) ? r1.segEnergies[s] : 1.0;
+        const e2 = (r2.segEnergies && r2.segEnergies[s] !== undefined) ? r2.segEnergies[s] : 1.0;
+        const avgEnergy = (e1 + e2) / 2;
+        const brightness = avgWeight * avgEnergy;
 
         const beamGrad = ctx.createLinearGradient(p1A[0], p1A[1], p1B[0], p1B[1]);
         if (avgDose > 0.05) {
-          beamGrad.addColorStop(0, `rgba(248, 113, 113, ${0.35 * avgWeight})`);
-          beamGrad.addColorStop(1, `rgba(251, 191, 36, ${0.12 * avgWeight})`);
+          beamGrad.addColorStop(0, `rgba(248, 113, 113, ${0.60 * brightness})`);
+          beamGrad.addColorStop(1, `rgba(251, 191, 36, ${0.24 * brightness})`);
         } else {
-          beamGrad.addColorStop(0, `rgba(${primaryBeamRGB}, ${0.40 * avgWeight})`);
-          beamGrad.addColorStop(1, `rgba(${primaryBeamRGB}, ${0.15 * avgWeight})`);
+          beamGrad.addColorStop(0, `rgba(${primaryBeamRGB}, ${0.68 * brightness})`);
+          beamGrad.addColorStop(1, `rgba(${primaryBeamRGB}, ${0.28 * brightness})`);
         }
 
         ctx.beginPath();
