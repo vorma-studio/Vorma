@@ -322,10 +322,10 @@
             <label class="text-xs font-semibold text-slate-600 block mb-1.5" data-i18n="labelTextureType">紋理類型</label>
             <div class="segmented-control">
               <button class="seg-btn" onclick="setParam('texture', 'smooth', this)" data-i18n="texSmooth">平滑</button>
-              <button class="seg-btn active" onclick="setParam('texture', 'vertical', this)" data-i18n="texVertical">縱向直紋</button>
+              <button class="seg-btn" onclick="setParam('texture', 'vertical', this)" data-i18n="texVertical">縱向直紋</button>
               <button class="seg-btn" onclick="setParam('texture', 'sawtooth', this)" data-i18n="texSaw">鋸齒</button>
               <button class="seg-btn" onclick="setParam('texture', 'wave', this)" data-i18n="texWave">正弦波</button>
-              <button class="seg-btn" onclick="setParam('texture', 'diamond', this)" data-i18n="texDiamond">鑽石紋</button>
+              <button class="seg-btn active" onclick="setParam('texture', 'diamond', this)" data-i18n="texDiamond">鑽石紋</button>
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4">
@@ -752,7 +752,7 @@ let state = {
   shoulderHeightMM: 45,
   curvature: 30,
   transPos: 50,
-  texture: 'vertical',
+  texture: 'diamond',
   rayRenderMode: 'beams',
   texDepth: 40,
   texDensity: 8,
