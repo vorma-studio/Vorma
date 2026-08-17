@@ -208,7 +208,7 @@
     <section class="flex-1 flex flex-col justify-between relative overflow-hidden bg-[#05070a] p-2">
       <div class="absolute top-2 left-0 z-10 flex gap-4 text-[10px] pointer-events-none opacity-90">
         <div class="flex items-center gap-1.5">
-          <span class="text-white" data-i18n="juiceDoseLabel">內容物接收 UV 劑量:</span>
+          <span class="text-white" data-i18n="juiceDoseLabel">果汁實際吸收 UV 劑量:</span>
           <span id="stat-juiceDose" class="font-bold font-mono" style="color: #754E24;">-</span>
         </div>
         <div class="flex items-center gap-1.5">
@@ -246,7 +246,7 @@
 
       <div class="z-10 flex gap-8 text-xs px-0 pb-2">
         <div>
-          <div class="text-[11px] text-blue-400 font-semibold" data-i18n="juiceDoseAvgLabel">0-60° 掃描平均劑量</div>
+          <div class="text-[11px] text-blue-400 font-semibold" data-i18n="juiceDoseAvgLabel">0-60° 掃描平均吸收劑量</div>
           <div id="stat-juiceDoseAvg" class="text-base font-bold text-blue-400 font-mono mt-0.5">-</div>
         </div>
         <div>
@@ -485,9 +485,9 @@ const i18nDict = {
     optBottle: "瓶形",
     optLight: "光照",
     optStack: "堆棧",
-    juiceDoseLabel: "內容物接收 UV 劑量:",
+    juiceDoseLabel: "果汁實際吸收 UV 劑量:",
     petLossLabel: "PET 反射 + 吸收:",
-    juiceDoseAvgLabel: "0-60° 掃描平均劑量",
+    juiceDoseAvgLabel: "0-60° 掃描平均吸收劑量",
     protectionLabel: "遮光防護效率",
     sysParamsHeader: "系統內部推導參數",
     facetAngle: "刻面角",
@@ -521,9 +521,9 @@ const i18nDict = {
     optBottle: "Bottle",
     optLight: "Lighting",
     optStack: "Pallet Stacking",
-    juiceDoseLabel: "Drink UV Dose:",
+    juiceDoseLabel: "Juice Absorbed UV Dose:",
     petLossLabel: "PET Reflect + Absorb:",
-    juiceDoseAvgLabel: "0-60° Scan Avg Dose",
+    juiceDoseAvgLabel: "0-60° Scan Avg Absorbed Dose",
     protectionLabel: "UV Protection Shield",
     sysParamsHeader: "Internal Derived Parameters",
     facetAngle: "Facet Deg",
@@ -1119,7 +1119,19 @@ function buildBottleGeometry(cx, topY, neckW, bodyW, bottomY) {
   };
 }
 
-const JUICE_DOSE_REF_DEPTH_MM = 5;
+/* V18: 改為沿實際果汁幾何路徑計算「真正被吸收」的劑量，
+   不再用固定 5mm 參考深度。做法：光線進入液體後，沿折射方向
+   在內壁多邊形上找下一個交點（液體對側壁），得到真實液柱長度，
+   再用 Beer-Lambert 定律算出這段路徑中實際被果汁吸收掉多少能量。
+   剩餘穿出去的能量視為「未被吸收、繼續前進」，不計入 juiceAbsorbed。 */
+function findLiquidExitT(startPt, dir, innerEdges) {
+  let bestT = null;
+  for (const e of innerEdges) {
+    const t = raySegIntersect(startPt, dir, e.a, e.b);
+    if (t !== null && t > 0.5 && (bestT === null || t < bestT)) bestT = t;
+  }
+  return bestT;
+}
 
 function traceRayV17(p0, d0, polygons, fillY, derivedFacetDeg) {
   let p = [p0[0], p0[1]], d = [d0[0], d0[1]];
@@ -1237,17 +1249,35 @@ function traceRayV17(p0, d0, polygons, fillY, derivedFacetDeg) {
   dTarget = [dTarget[0] / dnTarget, dTarget[1] / dnTarget];
 
   const alphaDrink = drinkMat.getAlpha(state.wavelength);
-  const drinkAtt = Math.exp(-alphaDrink * JUICE_DOSE_REF_DEPTH_MM);
+  let liquidPathMM = 0;
+
+  // 從光線真正進入液體的那個點開始，沿折射方向找液體對側壁，
+  // 得到這條光線實際會穿過多長的果汁，而不是用固定假設值。
+  const absorbInLiquid = (entryPt, energyAtEntry) => {
+    const exitT = findLiquidExitT(entryPt, dTarget, innerEdges);
+    const Lpx = (exitT !== null) ? exitT : 0; // 找不到對側壁（理論上不該發生）就當作沒有液程
+    const Lmm = Lpx / PX_PER_MM;
+    const surviveFrac = Math.exp(-alphaDrink * Lmm);
+    const absorbed = energyAtEntry * (1 - surviveFrac); // 這段液程中真正被果汁吸收掉的量
+    const exitPt = [entryPt[0] + dTarget[0] * Lpx, entryPt[1] + dTarget[1] * Lpx];
+    return { absorbed, Lmm, exitPt };
+  };
 
   if (isJuiceTarget) {
-    juiceDose = entryEnergy * drinkAtt;
-    path.push([hit2[0] + dTarget[0] * 150, hit2[1] + dTarget[1] * 150]);
+    const res = absorbInLiquid(hit2, entryEnergy);
+    juiceDose = res.absorbed; // 這裡的 juiceDose = 果汁「實際吸收」到的 UV 劑量（相對入射光=1.0的比例）
+    liquidPathMM = res.Lmm;
+    path.push(res.exitPt);
   } else {
     if (dTarget[1] > 0) {
       const tLiquid = (fillY - hit2[1]) / dTarget[1];
       if (tLiquid > 0 && tLiquid < 400) {
-        path.push([hit2[0] + dTarget[0] * tLiquid, fillY]);
-        juiceDose = entryEnergy * drinkAtt;
+        const entryPt = [hit2[0] + dTarget[0] * tLiquid, fillY];
+        path.push(entryPt);
+        const res = absorbInLiquid(entryPt, entryEnergy);
+        juiceDose = res.absorbed;
+        liquidPathMM = res.Lmm;
+        path.push(res.exitPt);
       } else {
         path.push([hit2[0] + dTarget[0] * 200, hit2[1] + dTarget[1] * 200]);
       }
@@ -1256,7 +1286,7 @@ function traceRayV17(p0, d0, polygons, fillY, derivedFacetDeg) {
     }
   }
 
-  return { path, juiceDose, reflectedEnergy, absorbedPET, hit: true };
+  return { path, juiceDose, reflectedEnergy, absorbedPET, hit: true, liquidPathMM };
 }
 
 function applyTransform(ctx) {
