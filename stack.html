@@ -191,6 +191,15 @@
     <div class="flex items-center gap-3">
       <span class="text-lg font-black tracking-widest text-slate-100">VORMA</span>
     </div>
+
+    <!-- 右側功能選單 -->
+    <div class="flex items-center gap-3">
+      <select id="moduleSelect" onchange="navigateModule(this.value)" class="bg-slate-900 border border-slate-700 text-slate-200 text-xs py-1 px-2 rounded-lg font-bold w-auto cursor-pointer focus:border-[#754E24]">
+        <option value="bottle">瓶形</option>
+        <option value="light">光照</option>
+        <option value="stack" selected>堆棧</option>
+      </select>
+    </div>
   </header>
 
   <!-- 主體三欄 Layout -->
@@ -515,6 +524,16 @@ const MANUAL_GRID_MAJOR = 10;
 
 let useManualLayers = false;
 let userOverrodeLayers = false;
+
+function navigateModule(value) {
+  if (value === 'bottle') {
+    window.location.href = 'https://vorma-studio.github.io/Vorma/bottle';
+  } else if (value === 'light') {
+    window.location.href = 'https://vorma-studio.github.io/Vorma/';
+  } else if (value === 'stack') {
+    window.location.href = 'https://vorma-studio.github.io/Vorma/stack';
+  }
+}
 
 function sanitizeInput(val, min = 5, max = 120, fallback = 30) {
   let num = parseFloat(val);
@@ -998,7 +1017,6 @@ function calculateBestPacking(l, w, h) {
     stackHeight: calcTotalH,
     totalSpanL: maxX.toFixed(1),
     totalSpanW: maxY.toFixed(1),
-    // 支援半手動覆寫數值顯示
     displaySpanL: ovL || maxX.toFixed(1),
     displaySpanW: ovW || maxY.toFixed(1),
     displaySpanH: ovH || calcTotalH,
@@ -1608,7 +1626,7 @@ function setupManualCanvasInteractions() {
   });
 }
 
-// ===== 3D CAD 渲染引擎 (無底框文字 + 支援標註拖曳) =====
+// ===== 3D CAD 渲染引擎 =====
 function create3DTextSprite(text, textColor = '#ffffff') {
   const canvas = document.createElement('canvas');
   canvas.width = 256; canvas.height = 64;
