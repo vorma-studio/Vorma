@@ -35,7 +35,7 @@
       user-select: none;
     }
 
-    input[type=number], select {
+    input[type=number], input[type=text], select {
       background: #ffffff;
       border: 1px solid #94a3b8;
       color: #0f172a;
@@ -46,9 +46,9 @@
       outline: none;
       width: 100%;
     }
-    input[type=number]:focus, select:focus {
-      border-color: #2563eb;
-      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    input[type=number]:focus, input[type=text]:focus, select:focus {
+      border-color: #754E24;
+      box-shadow: 0 0 0 2px rgba(117, 78, 36, 0.25);
     }
 
     .custom-scrollbar::-webkit-scrollbar {
@@ -63,12 +63,12 @@
       border-radius: 8px;
     }
 
-    /* iOS 風格膠囊 Toggle 開關 */
+    /* iOS 風格膠囊 Toggle 開關 (#754E24) */
     .switch-ios {
       position: relative;
       display: inline-block;
-      width: 36px;
-      height: 20px;
+      width: 38px;
+      height: 22px;
     }
     .switch-ios input { opacity: 0; width: 0; height: 0; }
     .slider-ios {
@@ -76,7 +76,7 @@
       background-color: #334155; transition: .3s; border-radius: 20px;
     }
     .slider-ios:before {
-      position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px;
+      position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
       background-color: white; transition: .3s; border-radius: 50%;
     }
     input:checked + .slider-ios { background-color: #754E24; }
@@ -121,17 +121,16 @@
       transition: all 0.2s ease;
     }
     .layer-btn.active {
-      background-color: #2563eb;
+      background-color: #754E24;
       color: #ffffff;
-      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
+      box-shadow: 0 2px 6px rgba(117, 78, 36, 0.4);
     }
 
-    /* 匯出圖檔按鈕樣式 */
-    .export-btn {
-      padding: 4px 10px;
-      font-size: 11px;
-      font-weight: 700;
-      border-radius: 9999px;
+    /* 極簡迷你向下箭頭下載按鈕 */
+    .mini-icon-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
       background-color: rgba(255, 255, 255, 0.08);
       color: #f8fafc;
       border: 1px solid rgba(255, 255, 255, 0.15);
@@ -139,13 +138,46 @@
       transition: all 0.2s ease;
       display: flex;
       align-items: center;
+      justify-content: center;
+    }
+    .mini-icon-btn:hover {
+      background-color: #754E24;
+      border-color: #a3703b;
+      box-shadow: 0 2px 8px rgba(117, 78, 36, 0.4);
+      transform: translateY(1px);
+    }
+
+    .manual-tool-btn {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 7px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       gap: 4px;
+      border: 1px solid rgba(15, 23, 42, 0.12);
     }
-    .export-btn:hover {
-      background-color: #2563eb;
-      border-color: #60a5fa;
-      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+    .manual-tool-btn-light {
+      background-color: #ffffff;
+      color: #0f172a;
     }
+    .manual-tool-btn-light:hover {
+      background-color: #f1f5f9;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    }
+    .manual-tool-btn-dark {
+      background-color: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+    }
+    .manual-tool-btn-dark:hover {
+      background-color: #1e293b;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+    .manual-tool-btn:active { transform: translateY(1px); }
 
     canvas { display: block; outline: none; }
     .view-panel { width: 100%; height: 100%; }
@@ -158,19 +190,6 @@
   <header class="h-11 px-6 flex items-center justify-between border-b border-slate-800/40 bg-[#05070a] shrink-0">
     <div class="flex items-center gap-3">
       <span class="text-lg font-black tracking-widest text-slate-100">VORMA</span>
-    </div>
-
-    <!-- 右側功能選單與語言切換鈕 -->
-    <div class="flex items-center gap-3">
-      <select id="moduleSelect" onchange="navigateModule(this.value)" class="bg-slate-900 border border-slate-700 text-slate-200 text-xs py-1 px-2 rounded-lg font-bold w-auto cursor-pointer focus:border-blue-500">
-        <option value="bottle" data-i18n="optBottle">瓶形</option>
-        <option value="light" data-i18n="optLight">光照</option>
-        <option value="stack" selected data-i18n="optStack">堆棧</option>
-      </select>
-
-      <button onclick="toggleLanguage()" class="text-xs px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition-all font-mono">
-        <span id="langBtnText">EN</span>
-      </button>
     </div>
   </header>
 
@@ -191,9 +210,9 @@
 
       <!-- VIEW 按鈕群 -->
       <div class="flex flex-col gap-2 items-center w-full px-1" id="view-mode-group">
-        <button class="view-btn active" onclick="switchTab('opticsTab', this)" data-i18n="nav2d">2D</button>
-        <button class="view-btn" onclick="switchTab('orthoTab', this)" data-i18n="navOrtho">CAD</button>
-        <button class="view-btn" onclick="switchTab('renderTab', this)" data-i18n="nav3d">3D</button>
+        <button class="view-btn active" onclick="switchTab('opticsTab', this)">2D</button>
+        <button class="view-btn" onclick="switchTab('renderTab', this)">3D</button>
+        <button class="view-btn" onclick="switchTab('manualTab', this)">手動</button>
       </div>
     </aside>
 
@@ -205,18 +224,14 @@
         
         <!-- Tab 1: 2D 棧板上視排版圖 -->
         <div id="opticsTab" class="view-panel flex flex-col items-center justify-center relative">
-          
-          <!-- 左上角：匯出黑白 JPG 圖案按鈕 (向下箭頭圖示) -->
           <div class="absolute top-2 left-2 z-10">
-            <button class="export-btn" onclick="export2DBlackWhiteJPG()" title="匯出黑白平面圖 JPG">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <button class="mini-icon-btn" onclick="export2DColorJPG()" title="下載 JPG">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
               </svg>
-              <span>JPG</span>
             </button>
           </div>
 
-          <!-- 右上角：層數切換按鈕（英文 ODD/EVEN） -->
           <div class="absolute top-2 right-2 z-10 flex items-center gap-1.5 py-1 px-2 text-xs">
             <span class="text-slate-400 text-[11px] mr-1 font-mono">Layer:</span>
             <button id="btn-odd" class="layer-btn active" onclick="setLayerType('odd')">ODD</button>
@@ -226,18 +241,40 @@
           <canvas id="simCanvas" style="width: 620px; height: 540px; cursor: grab;"></canvas>
         </div>
 
-        <!-- Tab 2: CAD 工程三視圖 -->
-        <div id="orthoTab" class="view-panel hidden flex flex-col items-center justify-center relative">
-          <canvas id="orthoCanvas" style="width: 720px; height: 540px;"></canvas>
-        </div>
-
-        <!-- Tab 3: CAD 45度斜角立體圖 -->
+        <!-- Tab 2: 3D 堆疊立體圖 -->
         <div id="renderTab" class="view-panel hidden relative">
+          <div class="absolute top-2 left-2 z-10 flex items-center gap-2">
+            <button class="mini-icon-btn" onclick="export3DColorJPG()" title="下載 JPG">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+              </svg>
+            </button>
+          </div>
           <div id="webglContainer"></div>
         </div>
+
+        <!-- Tab 3: 手動排列畫布 -->
+        <div id="manualTab" class="view-panel hidden flex flex-col items-center justify-center relative">
+          <div class="absolute top-2 left-2 z-10 flex items-center gap-2 bg-slate-900/80 px-2.5 py-1 rounded-full border border-slate-800 text-[11px] font-mono text-slate-300">
+            <span id="manual-layer-indicator" class="text-blue-400 font-bold">ODD (奇數層)</span>
+            <span>|</span>
+            <span>箱數: <b id="manual-count" class="text-emerald-400">0</b></span>
+            <span>|</span>
+            <span>利用率: <b id="manual-util" class="text-blue-400">0.0%</b></span>
+          </div>
+
+          <div class="absolute top-2 right-2 z-10 flex items-center gap-1.5 py-1 px-2 text-xs">
+            <span class="text-slate-400 text-[11px] mr-1 font-mono">編輯層:</span>
+            <button id="manual-btn-odd" class="layer-btn active" onclick="setManualEditLayer('odd')">ODD 奇數</button>
+            <button id="manual-btn-even" class="layer-btn" onclick="setManualEditLayer('even')">EVEN 偶數</button>
+          </div>
+
+          <canvas id="manualCanvas" style="width: 620px; height: 540px; cursor: crosshair;"></canvas>
+        </div>
+
       </div>
 
-      <!-- 底部左側數據摘要 Bar（精確至小數點後一位） -->
+      <!-- 底部左側數據摘要 Bar -->
       <div class="z-10 flex gap-10 text-xs px-0 pb-2">
         <div>
           <div class="text-[11px] text-blue-400 font-semibold">單層箱數 / 總箱數</div>
@@ -246,7 +283,7 @@
           </div>
         </div>
         <div>
-          <div class="text-[11px] text-emerald-400 font-semibold">可疊層數 (總高) / 第一層長寬</div>
+          <div class="text-[11px] text-emerald-400 font-semibold">堆疊層數 (總高) / 當前層總長寬</div>
           <div class="text-base font-bold text-emerald-400 font-mono mt-0.5">
             <span id="stat-layersInfo">0 層 (0.0 cm)</span> | <span id="stat-boxTotalDim">0.0 × 0.0 cm</span>
           </div>
@@ -255,14 +292,16 @@
 
     </section>
 
-    <!-- 右側控制面板 -->
-    <aside class="w-[460px] shrink-0 flex flex-col gap-3 overflow-y-auto custom-scrollbar max-h-[calc(100vh-80px)] pr-2">
+    <!-- 右側控制面板容器 -->
+    <aside id="right-control-panel" class="w-[460px] shrink-0 flex flex-col gap-3 overflow-y-auto custom-scrollbar max-h-[calc(100vh-80px)] pr-2">
+      
+      <!-- Card 1: 輸入箱子尺寸規格 -->
       <div class="v-card geometry-card overflow-hidden shrink-0" id="card-geometry">
         <div class="v-card-header p-4 flex items-center justify-between" onclick="toggleAccordion('card-geometry')">
           <div>
-            <div class="text-xs font-bold text-slate-900 uppercase tracking-wider" data-i18n="cardTitle1">輸入箱子尺寸與限制</div>
+            <div class="text-xs font-bold text-slate-900 uppercase tracking-wider">輸入箱子尺寸與堆疊層數</div>
             <div class="text-[11px] text-slate-500 mt-0.5">
-              <span data-i18n="lblL">長</span>: <span id="sum-l">40.0</span> cm | <span data-i18n="lblW">寬</span>: <span id="sum-w">30.0</span> cm | <span data-i18n="lblH">高</span>: <span id="sum-h">25.0</span> cm
+              長: <span id="sum-l">40.0</span> cm | 寬: <span id="sum-w">30.0</span> cm | 高: <span id="sum-h">25.0</span> cm
             </div>
           </div>
           <span class="arrow-icon text-slate-500 text-xs transition-transform duration-300 rotate-180">▲</span>
@@ -271,42 +310,89 @@
         <div class="card-content px-4 pb-4 space-y-4">
           <div class="grid grid-cols-3 gap-3">
             <div>
-              <label class="text-xs font-semibold text-slate-700 block mb-1" data-i18n="boxL">箱子長 (L):</label>
+              <label class="text-xs font-semibold text-slate-700 block mb-1">箱子長 (L):</label>
               <div class="flex items-center gap-1">
-                <input type="number" id="boxL" value="40" min="5" max="120" step="0.1" oninput="updatePacking()">
+                <input type="number" id="boxL" value="40" min="5" max="120" step="0.1" oninput="handleBoxDimChange()">
                 <span class="text-[10px] text-slate-600 font-mono">cm</span>
               </div>
             </div>
             <div>
-              <label class="text-xs font-semibold text-slate-700 block mb-1" data-i18n="boxW">箱子寬 (W):</label>
+              <label class="text-xs font-semibold text-slate-700 block mb-1">箱子寬 (W):</label>
               <div class="flex items-center gap-1">
-                <input type="number" id="boxW" value="30" min="5" max="100" step="0.1" oninput="updatePacking()">
+                <input type="number" id="boxW" value="30" min="5" max="100" step="0.1" oninput="handleBoxDimChange()">
                 <span class="text-[10px] text-slate-600 font-mono">cm</span>
               </div>
             </div>
             <div>
-              <label class="text-xs font-semibold text-slate-700 block mb-1" data-i18n="boxH">箱子高 (H):</label>
+              <label class="text-xs font-semibold text-slate-700 block mb-1">箱子高 (H):</label>
               <div class="flex items-center gap-1">
-                <input type="number" id="boxH" value="25" min="5" max="120" step="0.1" oninput="updatePacking()">
+                <input type="number" id="boxH" value="25" min="5" max="120" step="0.1" oninput="handleBoxDimChange()">
                 <span class="text-[10px] text-slate-600 font-mono">cm</span>
               </div>
             </div>
           </div>
 
+          <!-- 自訂層數設定 (手動與自動模式通用) -->
           <div class="pt-2 border-t border-slate-300/80 space-y-2">
-            <div class="text-[11px] font-bold text-slate-800 uppercase tracking-wider" data-i18n="envTitle">環境與限制參數</div>
-            <div class="grid grid-cols-2 gap-4 text-xs text-slate-700 bg-slate-100 p-3 rounded-xl">
-              <div><span data-i18n="palletDim">棧板面積</span>: <b class="font-mono text-slate-900">120.0 × 100.0 cm</b></div>
-              <div><span data-i18n="maxH">高度上限</span>: <b class="font-mono text-slate-900">120.0 cm</b></div>
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-slate-800 uppercase tracking-wider">堆疊層數設定</span>
+              <button class="text-[10px] text-blue-600 hover:underline" onclick="resetLayersToAuto()">恢復自動限高計算</button>
+            </div>
+            <div class="grid grid-cols-2 gap-3 items-center bg-slate-100 p-2.5 rounded-xl">
+              <div>
+                <label class="text-[11px] font-semibold text-slate-700 block mb-0.5">指定堆疊層數:</label>
+                <div class="flex items-center gap-1">
+                  <input type="number" id="customLayerCount" value="4" min="1" max="25" step="1" oninput="handleCustomLayersInput()">
+                  <span class="text-[10px] text-slate-600 font-mono">層</span>
+                </div>
+              </div>
+              <div class="text-[11px] text-slate-600">
+                預設高度上限: <b class="text-slate-900 font-mono">120 cm</b><br>
+                <span class="text-[10px] text-slate-500">(可直接自行輸入覆寫層數)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 半手動覆寫標註文字 -->
+          <div class="pt-2 border-t border-slate-300/80 space-y-2">
+            <div class="text-[11px] font-bold text-slate-800 uppercase tracking-wider">標註顯示設定 (可半手動覆寫)</div>
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="text-[10px] text-slate-600 block">覆寫整棧長:</label>
+                <input type="text" id="overrideSpanL" placeholder="自動計算" oninput="updatePacking()">
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-600 block">覆寫整棧寬:</label>
+                <input type="text" id="overrideSpanW" placeholder="自動計算" oninput="updatePacking()">
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-600 block">覆寫整棧高:</label>
+                <input type="text" id="overrideSpanH" placeholder="自動計算" oninput="updatePacking()">
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="text-[10px] text-slate-600 block">覆寫單箱長:</label>
+                <input type="text" id="overrideBoxL" placeholder="自動計算" oninput="updatePacking()">
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-600 block">覆寫單箱寬:</label>
+                <input type="text" id="overrideBoxW" placeholder="自動計算" oninput="updatePacking()">
+              </div>
+              <div>
+                <label class="text-[10px] text-slate-600 block">覆寫單箱高:</label>
+                <input type="text" id="overrideBoxH" placeholder="自動計算" oninput="updatePacking()">
+              </div>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- Card 2: 計算結果與詳細資訊 -->
       <div class="v-card geometry-card overflow-hidden shrink-0" id="card-result">
         <div class="v-card-header p-4 flex items-center justify-between" onclick="toggleAccordion('card-result')">
           <div>
-            <div class="text-xs font-bold text-slate-900 uppercase tracking-wider" data-i18n="cardTitle2">最佳排列演算法分析</div>
+            <div class="text-xs font-bold text-slate-900 uppercase tracking-wider">最佳排列演算法分析</div>
             <div class="text-[11px] text-slate-500 mt-0.5">Maximal-Rectangle Packing Engine</div>
           </div>
           <span class="arrow-icon text-slate-500 text-xs transition-transform duration-300 rotate-180">▲</span>
@@ -318,6 +404,61 @@
           </div>
         </div>
       </div>
+
+      <!-- Card 3: 手動排列操作面板 -->
+      <div class="v-card geometry-card overflow-hidden shrink-0 hidden" id="card-manual">
+        <div class="v-card-header p-4 flex items-center justify-between" onclick="toggleAccordion('card-manual')">
+          <div>
+            <div class="text-xs font-bold text-slate-900 uppercase tracking-wider">手動排列編輯器</div>
+            <div class="text-[11px] text-slate-500 mt-0.5" id="manual-header-status">
+              支援奇偶層獨立編輯與一鍵左右鏡像
+            </div>
+          </div>
+          <span class="arrow-icon text-slate-500 text-xs transition-transform duration-300 rotate-180">▲</span>
+        </div>
+
+        <div class="card-content px-4 pb-4 space-y-3">
+          <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl">
+            <button id="card-btn-odd" onclick="setManualEditLayer('odd')" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-[#754E24] text-white shadow">
+              編輯奇數層 (ODD)
+            </button>
+            <button id="card-btn-even" onclick="setManualEditLayer('even')" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-700 hover:bg-slate-200">
+              編輯偶數層 (EVEN)
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="manualAddBox()" class="manual-tool-btn manual-tool-btn-light">＋ 新增箱子</button>
+            <button onclick="manualRotateSelected()" class="manual-tool-btn manual-tool-btn-light">↻ 旋轉選取 (R)</button>
+            <button onclick="manualDeleteSelected()" class="manual-tool-btn manual-tool-btn-light">✕ 刪除選取 (Del)</button>
+            <button onclick="manualClearCurrentLayer()" class="manual-tool-btn manual-tool-btn-light">清空當前層</button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-300/80">
+            <button onclick="manualCopyFromOddHorizontal()" class="manual-tool-btn manual-tool-btn-light text-[10px] text-amber-900 font-bold bg-amber-50 border-amber-300 hover:bg-amber-100" title="左右水平翻轉">
+              ⇋ 水平鏡像生成偶數層
+            </button>
+            <button onclick="manualCopyFromOdd180()" class="manual-tool-btn manual-tool-btn-light text-[10px]" title="中心旋轉 180° 對稱">
+              ⟲ 180° 對稱生成
+            </button>
+          </div>
+
+          <div>
+            <button onclick="manualApplyBothLayers()" class="manual-tool-btn manual-tool-btn-dark w-full py-2 font-bold">
+              💾 儲存自訂排版
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between bg-slate-100 p-2.5 rounded-xl text-xs">
+            <span class="font-semibold text-slate-800">啟用手動排版至 2D/3D</span>
+            <label class="switch-ios">
+              <input type="checkbox" id="useManualLayersToggle" onchange="toggleUseManualLayers()">
+              <span class="slider-ios"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
     </aside>
 
   </main>
@@ -325,7 +466,7 @@
   <footer class="h-6 px-6 flex items-center justify-between border-t border-slate-800/40 bg-[#05070a] text-[10px] text-slate-400 shrink-0 font-mono">
     <div class="flex items-center gap-4">
       <span class="flex items-center gap-1.5">
-        <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+        <span class="w-1.5 h-1.5 rounded-full bg-[#754E24]"></span>
         Maximal-Rectangle Engine
       </span>
       <span>|</span>
@@ -337,8 +478,8 @@
 const PALLET_L = 120;
 const PALLET_W = 100;
 const MAX_H = 120;
+const BRAND_BROWN = '#754E24';
 
-let currentLang = 'zh';
 let currentTab = 'opticsTab';
 let selectedLayerType = 'odd';
 let showDimensions = true;
@@ -348,75 +489,157 @@ let scene3D, camera3D, renderer3D, controls3D, is3DInitialized = false;
 let palletGroup3D = null;
 let currentPlan = null;
 
-// 多國語言辭典
-const i18n = {
-  zh: {
-    optBottle: "瓶形",
-    optLight: "光照",
-    optStack: "堆棧",
-    nav2d: "2D",
-    navOrtho: "CAD",
-    nav3d: "3D",
-    cardTitle1: "輸入箱子尺寸與限制",
-    cardTitle2: "最佳排列演算法分析",
-    lblL: "長", lblW: "寬", lblH: "高",
-    boxL: "箱子長 (L):", boxW: "箱子寬 (W):", boxH: "箱子高 (H):",
-    envTitle: "環境與限制參數",
-    palletDim: "棧板面積", maxH: "高度上限",
-    unitBoxes: "箱", unitLayers: "層", unitScore: "分",
-    detPerLayer: "單層箱數:", detTotalBoxes: "總箱數:", detMaxLayers: "可疊層數:",
-    detTotalH: "總高", detUtil: "空間利用率:", detInterlock: "咬合度:",
-    topViewLbl: "TOP VIEW (俯視圖 120x100)",
-    frontViewLbl: "FRONT VIEW (正視圖 長120cm/高",
-    sideViewLbl: "SIDE VIEW (側視圖 寬100cm)"
-  },
-  en: {
-    optBottle: "Bottle",
-    optLight: "Lighting",
-    optStack: "Pallet Stacking",
-    nav2d: "2D",
-    navOrtho: "CAD",
-    nav3d: "3D",
-    cardTitle1: "Box Dimensions & Limits",
-    cardTitle2: "Packing Engine Analysis",
-    lblL: "L", lblW: "W", lblH: "H",
-    boxL: "Box Length (L):", boxW: "Box Width (W):", boxH: "Box Height (H):",
-    envTitle: "Constraints",
-    palletDim: "Pallet Area", maxH: "Max Height",
-    unitBoxes: "boxes", unitLayers: "layers", unitScore: "pts",
-    detPerLayer: "Per Layer:", detTotalBoxes: "Total Boxes:", detMaxLayers: "Max Layers:",
-    detTotalH: "Total H", detUtil: "Utilization:", detInterlock: "Interlock:"
-  }
-};
+// 3D 尺寸標註拖曳變數
+const draggableSprites = [];
+let draggingSprite = null;
+let dragPlane = new THREE.Plane();
+let dragIntersection = new THREE.Vector3();
+let dragOffset = new THREE.Vector3();
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
 
-function toggleLanguage() {
-  currentLang = (currentLang === 'zh') ? 'en' : 'zh';
-  document.getElementById('langBtnText').innerText = currentLang === 'zh' ? 'EN' : '中';
-  updateUIText();
-  renderAll();
+// 手動模式
+let manualEditLayer = 'odd';
+let manualOddBoxes = [];
+let manualEvenBoxes = [];
+
+let manualNextId = 1;
+let manualSelectedId = null;
+let manualDrag = null;
+const MANUAL_SCALE = 3.6;
+const MANUAL_OFFSET_X = 94;
+const MANUAL_OFFSET_Y = 90;
+const MANUAL_SNAP = 0.25;
+const MANUAL_GRID_MINOR = 1;
+const MANUAL_GRID_MAJOR = 10;
+
+let useManualLayers = false;
+let userOverrodeLayers = false;
+
+function sanitizeInput(val, min = 5, max = 120, fallback = 30) {
+  let num = parseFloat(val);
+  if (isNaN(num) || num <= 0) return fallback;
+  if (num > max) return max;
+  if (num < min) return min;
+  return num;
 }
 
-function updateUIText() {
-  const dict = i18n[currentLang];
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    if (dict[key]) el.innerText = dict[key];
+function handleBoxDimChange() {
+  const rawH = parseFloat(document.getElementById('boxH').value);
+  if (!userOverrodeLayers && rawH > 0) {
+    const h = Math.min(rawH, 120);
+    const autoLayers = Math.max(1, Math.min(25, Math.floor(MAX_H / h)));
+    document.getElementById('customLayerCount').value = autoLayers;
+  }
+  updatePacking();
+}
+
+function handleCustomLayersInput() {
+  userOverrodeLayers = true;
+  updatePacking();
+}
+
+function resetLayersToAuto() {
+  userOverrodeLayers = false;
+  const rawH = parseFloat(document.getElementById('boxH').value) || 25;
+  const h = sanitizeInput(rawH, 5, 120, 25);
+  const autoLayers = Math.max(1, Math.min(25, Math.floor(MAX_H / h)));
+  document.getElementById('customLayerCount').value = autoLayers;
+  updatePacking();
+}
+
+function getCurrentManualBoxes() {
+  return manualEditLayer === 'odd' ? manualOddBoxes : manualEvenBoxes;
+}
+
+function setCurrentManualBoxes(boxes) {
+  if (manualEditLayer === 'odd') manualOddBoxes = boxes;
+  else manualEvenBoxes = boxes;
+}
+
+function setManualEditLayer(layer) {
+  manualEditLayer = layer;
+  manualSelectedId = null;
+
+  document.getElementById('manual-btn-odd').classList.toggle('active', layer === 'odd');
+  document.getElementById('manual-btn-even').classList.toggle('active', layer === 'even');
+
+  const cardBtnOdd = document.getElementById('card-btn-odd');
+  const cardBtnEven = document.getElementById('card-btn-even');
+  if (layer === 'odd') {
+    cardBtnOdd.className = "flex-1 py-1.5 text-xs font-bold rounded-lg bg-[#754E24] text-white shadow";
+    cardBtnEven.className = "flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-700 hover:bg-slate-200";
+    document.getElementById('manual-layer-indicator').innerText = "ODD (奇數層)";
+    document.getElementById('manual-layer-indicator').className = "text-[#a3703b] font-bold";
+  } else {
+    cardBtnOdd.className = "flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-700 hover:bg-slate-200";
+    cardBtnEven.className = "flex-1 py-1.5 text-xs font-bold rounded-lg bg-emerald-700 text-white shadow";
+    document.getElementById('manual-layer-indicator').innerText = "EVEN (偶數層)";
+    document.getElementById('manual-layer-indicator').className = "text-emerald-400 font-bold";
+  }
+
+  renderManualPallet();
+}
+
+function manualCopyFromOddHorizontal() {
+  if (manualOddBoxes.length === 0) {
+    alert('奇數層目前是空的，請先在奇數層放置箱子。');
+    return;
+  }
+  const { l, w } = manualCurrentBoxDims();
+  manualEvenBoxes = manualOddBoxes.map((b) => {
+    const nx = PALLET_L - b.x - b.width;
+    const ny = b.y;
+    return {
+      id: manualNextId++,
+      x: Math.round(nx * 100) / 100,
+      y: Math.round(ny * 100) / 100,
+      width: b.width,
+      height: b.height,
+      rotation: rotationForFootprint(b.width, b.height, l, w)
+    };
   });
+  setManualEditLayer('even');
+  updatePacking();
+}
+
+function manualCopyFromOdd180() {
+  if (manualOddBoxes.length === 0) {
+    alert('奇數層目前是空的，請先在奇數層放置箱子。');
+    return;
+  }
+  const { l, w } = manualCurrentBoxDims();
+  manualEvenBoxes = manualOddBoxes.map((b) => {
+    const nx = PALLET_L - b.x - b.width;
+    const ny = PALLET_W - b.y - b.height;
+    return {
+      id: manualNextId++,
+      x: Math.round(nx * 100) / 100,
+      y: Math.round(ny * 100) / 100,
+      width: b.width,
+      height: b.height,
+      rotation: rotationForFootprint(b.width, b.height, l, w)
+    };
+  });
+  setManualEditLayer('even');
+  updatePacking();
+}
+
+function manualApplyBothLayers() {
+  if (manualOddBoxes.length === 0 && manualEvenBoxes.length === 0) {
+    alert('目前手動排列尚未放置任何箱子。');
+    return;
+  }
+  document.getElementById('useManualLayersToggle').checked = true;
+  useManualLayers = true;
+  document.getElementById('manual-header-status').innerText = `已儲存：奇數層(${manualOddBoxes.length}箱) / 偶數層(${manualEvenBoxes.length}箱)`;
+  updatePacking();
+  alert(`自訂排版已儲存！\n奇數層：${manualOddBoxes.length} 箱\n偶數層：${manualEvenBoxes.length} 箱`);
 }
 
 function toggleDimensionMode(checked) {
   showDimensions = checked;
   renderAll();
-}
-
-function navigateModule(value) {
-  if (value === 'bottle') {
-    window.location.href = 'https://vorma-studio.github.io/Vorma/bottle';
-  } else if (value === 'light') {
-    window.location.href = 'https://vorma-studio.github.io/Vorma/';
-  } else if (value === 'stack') {
-    window.location.href = 'https://vorma-studio.github.io/Vorma/stack';
-  }
 }
 
 function setLayerType(type) {
@@ -434,12 +657,30 @@ function switchTab(tabId, el) {
   document.querySelectorAll('.view-panel').forEach(p => p.classList.add('hidden'));
   document.getElementById(tabId).classList.remove('hidden');
 
+  const manualCard = document.getElementById('card-manual');
+  const resultCard = document.getElementById('card-result');
+  const parentPanel = document.getElementById('right-control-panel');
+
+  if (tabId === 'manualTab') {
+    if (manualCard) manualCard.classList.remove('hidden');
+    if (parentPanel && manualCard && resultCard) {
+      parentPanel.insertBefore(manualCard, resultCard);
+    }
+  } else {
+    if (manualCard) manualCard.classList.add('hidden');
+    if (parentPanel && manualCard && resultCard) {
+      parentPanel.insertBefore(resultCard, manualCard);
+    }
+  }
+
   if (tabId === 'renderTab') {
     init3DRenderer();
     setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
       if (currentPlan) update3DPalllet(currentPlan);
     }, 50);
+  } else if (tabId === 'manualTab') {
+    renderManualPallet();
   } else {
     renderAll();
   }
@@ -499,14 +740,15 @@ function canonicalDims(inputL, inputW) {
 }
 
 function rotationForFootprint(fw, fh, inputL, inputW) {
-  return (fw === inputL && fh === inputW) ? 0 : 90;
+  return (Math.abs(fw - inputL) < 0.1 && Math.abs(fh - inputW) < 0.1) ? 0 : 90;
 }
 
 function fillBlock(offsetX, offsetY, regionW, regionH, boxW, boxH) {
   const boxes = [];
-  if (boxW <= 0 || boxH <= 0) return boxes;
+  if (boxW <= 0 || boxH <= 0 || boxW > 120 || boxH > 100) return boxes;
   const cols = Math.floor((regionW + 1e-6) / boxW);
   const rows = Math.floor((regionH + 1e-6) / boxH);
+  if (cols > 50 || rows > 50) return boxes;
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       boxes.push({ x: offsetX + c * boxW, y: offsetY + r * boxH, width: boxW, height: boxH });
@@ -548,6 +790,8 @@ function generateBlockPatterns(inputL, inputW) {
       if (combined.length > 0) candidates.push(combined);
     }
   });
+
+  if (candidates.length === 0) return [];
 
   candidates.sort((a, b) => b.length - a.length);
   const bestCount = candidates[0].length;
@@ -594,8 +838,12 @@ function generateCanonicalPatterns(inputL, inputW) {
     expandedPatterns.push({ id: `Pat_${idx}_Orig`, boxes: pat });
 
     let rot180 = pat.map(b => ({
-      x: PALLET_L - b.x - b.width, y: PALLET_W - b.y - b.height,
-      width: b.width, height: b.height, rotation: b.rotation, label: b.label
+      x: PALLET_L - b.x - b.width,
+      y: PALLET_W - b.y - b.height,
+      width: b.width,
+      height: b.height,
+      rotation: b.rotation,
+      label: b.label
     })).filter(b => b.x >= 0 && b.y >= 0 && b.x + b.width <= PALLET_L && b.y + b.height <= PALLET_W);
 
     if (rot180.length === pat.length) expandedPatterns.push({ id: `Pat_${idx}_Rot180`, boxes: rot180 });
@@ -671,13 +919,46 @@ function findBestLayerSequence(patterns, maxLayers) {
 }
 
 function calculateBestPacking(l, w, h) {
-  const maxLayers = Math.floor(MAX_H / h);
-  if (maxLayers <= 0) return null;
+  l = sanitizeInput(l, 5, 120, 40);
+  w = sanitizeInput(w, 5, 100, 30);
+  h = sanitizeInput(h, 5, 120, 25);
 
-  let patterns = generateCanonicalPatterns(l, w);
-  if (patterns.length === 0) return null;
+  let rawLayers = parseInt(document.getElementById('customLayerCount').value);
+  if (isNaN(rawLayers) || rawLayers < 1) rawLayers = Math.max(1, Math.floor(MAX_H / h));
+  const maxLayers = Math.min(25, rawLayers);
 
-  let bestLayerBoxes = findBestLayerSequence(patterns, maxLayers);
+  let bestLayerBoxes;
+  let usingManual = false;
+
+  if (useManualLayers) {
+    const oddLayer = manualOddBoxes.map((b, i) => ({
+      x: Math.round(b.x * 100) / 100,
+      y: Math.round(b.y * 100) / 100,
+      width: b.width,
+      height: b.height,
+      rotation: rotationForFootprint(b.width, b.height, l, w),
+      label: `${i + 1}`
+    }));
+    const evenLayer = manualEvenBoxes.map((b, i) => ({
+      x: Math.round(b.x * 100) / 100,
+      y: Math.round(b.y * 100) / 100,
+      width: b.width,
+      height: b.height,
+      rotation: rotationForFootprint(b.width, b.height, l, w),
+      label: `${i + 1}`
+    }));
+
+    bestLayerBoxes = [];
+    for (let i = 0; i < maxLayers; i++) {
+      bestLayerBoxes.push(i % 2 === 0 ? oddLayer : (evenLayer.length > 0 ? evenLayer : oddLayer));
+    }
+    usingManual = true;
+  } else {
+    let patterns = generateCanonicalPatterns(l, w);
+    if (patterns.length === 0) return null;
+    bestLayerBoxes = findBestLayerSequence(patterns, maxLayers);
+  }
+
   let totalBoxes = 0, totalSupport = 0, totalInterlock = 0;
 
   bestLayerBoxes.forEach((lay, idx) => {
@@ -687,38 +968,59 @@ function calculateBestPacking(l, w, h) {
     totalInterlock += parseFloat(metrics.interlock);
   });
 
-  // 第一層擺放後的實際最大長寬
   let maxX = 0, maxY = 0;
-  if (bestLayerBoxes[0]) {
-    bestLayerBoxes[0].forEach(b => {
+  const inspectLayer = (selectedLayerType === 'even' && bestLayerBoxes.length > 1) ? bestLayerBoxes[1] : bestLayerBoxes[0];
+  if (inspectLayer) {
+    inspectLayer.forEach(b => {
       if (b.x + b.width > maxX) maxX = b.x + b.width;
       if (b.y + b.height > maxY) maxY = b.y + b.height;
     });
   }
 
+  const ovL = document.getElementById('overrideSpanL').value.trim();
+  const ovW = document.getElementById('overrideSpanW').value.trim();
+  const ovH = document.getElementById('overrideSpanH').value.trim();
+  const ovBL = document.getElementById('overrideBoxL').value.trim();
+  const ovBW = document.getElementById('overrideBoxW').value.trim();
+  const ovBH = document.getElementById('overrideBoxH').value.trim();
+
+  // 計算實際總高數值 (cm)
+  const calcTotalH = (maxLayers * h).toFixed(1);
+
   return {
+    boxL: l,
+    boxW: w,
     boxH: h,
     layers: bestLayerBoxes.map(boxes => ({ boxes })),
     perLayer: bestLayerBoxes[0]?.length || 0,
     maxLayers: maxLayers,
     totalBoxes: totalBoxes,
-    stackHeight: (maxLayers * h).toFixed(1),
+    stackHeight: calcTotalH,
     totalSpanL: maxX.toFixed(1),
     totalSpanW: maxY.toFixed(1),
+    // 支援半手動覆寫數值顯示
+    displaySpanL: ovL || maxX.toFixed(1),
+    displaySpanW: ovW || maxY.toFixed(1),
+    displaySpanH: ovH || calcTotalH,
+    displayBoxL: ovBL || l.toFixed(1),
+    displayBoxW: ovBW || w.toFixed(1),
+    displayBoxH: ovBH || h.toFixed(1),
     utilization: ((l * w * h * totalBoxes) / (PALLET_L * PALLET_W * MAX_H) * 100).toFixed(1),
-    orientation: `Maximal-Rectangle 智慧交錯序列`,
-    interlockScore: (totalInterlock / maxLayers).toFixed(1),
-    arrangementSize: { width: PALLET_L, depth: PALLET_W, height: maxLayers * h }
+    orientation: usingManual ? `手動自訂雙層排版` : `Maximal-Rectangle 智慧交錯序列`,
+    interlockScore: (totalInterlock / maxLayers).toFixed(1)
   };
 }
 
 function updatePacking() { renderAll(); }
 
 function renderAll() {
-  const dict = i18n[currentLang];
-  const l = parseFloat(document.getElementById('boxL').value) || 40;
-  const w = parseFloat(document.getElementById('boxW').value) || 30;
-  const h = parseFloat(document.getElementById('boxH').value) || 25;
+  const rawL = parseFloat(document.getElementById('boxL').value) || 40;
+  const rawW = parseFloat(document.getElementById('boxW').value) || 30;
+  const rawH = parseFloat(document.getElementById('boxH').value) || 25;
+
+  const l = sanitizeInput(rawL, 5, 120, 40);
+  const w = sanitizeInput(rawW, 5, 100, 30);
+  const h = sanitizeInput(rawH, 5, 120, 25);
 
   document.getElementById('sum-l').innerText = l.toFixed(1);
   document.getElementById('sum-w').innerText = w.toFixed(1);
@@ -734,33 +1036,33 @@ function renderAll() {
     return;
   }
 
-  // 左下角兩欄看板數據（精確至小數點後一位）
-  document.getElementById('stat-perLayer').innerText = `${currentPlan.perLayer} ${dict.unitBoxes}`;
-  document.getElementById('stat-totalBoxes').innerText = `${currentPlan.totalBoxes} ${dict.unitBoxes}`;
-  document.getElementById('stat-layersInfo').innerText = `${currentPlan.maxLayers} 層 (${currentPlan.stackHeight} cm)`;
-  document.getElementById('stat-boxTotalDim').innerText = `${currentPlan.totalSpanL} × ${currentPlan.totalSpanW} cm`;
+  // 底部數據摘要列（連動覆寫數值）
+  document.getElementById('stat-perLayer').innerText = `${currentPlan.perLayer} 箱`;
+  document.getElementById('stat-totalBoxes').innerText = `${currentPlan.totalBoxes} 箱`;
+  document.getElementById('stat-layersInfo').innerText = `${currentPlan.maxLayers} 層 (${currentPlan.displaySpanH} cm)`;
+  document.getElementById('stat-boxTotalDim').innerText = `${currentPlan.displaySpanL} × ${currentPlan.displaySpanW} cm`;
 
   document.getElementById('result-details').innerHTML = `
-    <div><b>${dict.detPerLayer}</b> ${currentPlan.perLayer} ${dict.unitBoxes} | <b>${dict.detTotalBoxes}</b> ${currentPlan.totalBoxes} ${dict.unitBoxes}</div>
-    <div><b>${dict.detMaxLayers}</b> ${currentPlan.maxLayers} ${dict.unitLayers} (${dict.detTotalH} ${currentPlan.stackHeight} cm)</div>
-    <div><b>第一層實際總長寬:</b> ${currentPlan.totalSpanL} × ${currentPlan.totalSpanW} cm</div>
-    <div><b>${dict.detUtil}</b> ${currentPlan.utilization}% | <b>${dict.detInterlock}</b> <span class="text-emerald-400 font-bold">${currentPlan.interlockScore} ${dict.unitScore}</span></div>
+    <div><b>單層箱數:</b> ${currentPlan.perLayer} 箱 | <b>總箱數:</b> ${currentPlan.totalBoxes} 箱</div>
+    <div><b>堆疊層數:</b> ${currentPlan.maxLayers} 層 (總高 ${currentPlan.displaySpanH} cm)</div>
+    <div><b>當前層總長寬:</b> ${currentPlan.displaySpanL} × ${currentPlan.displaySpanW} cm</div>
+    <div><b>空間利用率:</b> ${currentPlan.utilization}% | <b>咬合度:</b> <span class="text-emerald-400 font-bold">${currentPlan.interlockScore} 分</span></div>
   `;
 
   if (currentTab === 'opticsTab') {
     render2DPalllet(currentPlan);
-  } else if (currentTab === 'orthoTab') {
-    renderCADOrthoView(currentPlan);
   } else if (currentTab === 'renderTab') {
     update3DPalllet(currentPlan);
+  } else if (currentTab === 'manualTab') {
+    renderManualPallet();
   }
 }
 
-/* 繪製帶箭頭的 2D 雙向尺寸標註線 (支援小數點後一位) */
+// 2D 標註文字（無底框、清晰呈現）
 function drawDimensionLine(ctx, x1, y1, x2, y2, text, isVertical = false) {
   ctx.save();
-  ctx.strokeStyle = '#facc15';
-  ctx.fillStyle = '#facc15';
+  ctx.strokeStyle = BRAND_BROWN;
+  ctx.fillStyle = BRAND_BROWN;
   ctx.lineWidth = 1.5;
   ctx.font = 'bold 12px monospace';
 
@@ -779,9 +1081,7 @@ function drawDimensionLine(ctx, x1, y1, x2, y2, text, isVertical = false) {
     const midX = (x1 + x2) / 2;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillStyle = 'rgba(5, 7, 10, 0.85)';
-    ctx.fillRect(midX - 40, y1 + 3, 80, 16);
-    ctx.fillStyle = '#facc15';
+    ctx.fillStyle = BRAND_BROWN;
     ctx.fillText(text, midX, y1 + 5);
   } else {
     ctx.beginPath();
@@ -792,16 +1092,13 @@ function drawDimensionLine(ctx, x1, y1, x2, y2, text, isVertical = false) {
     const midY = (y1 + y2) / 2;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(5, 7, 10, 0.85)';
-    ctx.fillRect(x1 + 4, midY - 9, 75, 18);
-    ctx.fillStyle = '#facc15';
+    ctx.fillStyle = BRAND_BROWN;
     ctx.fillText(text, x1 + 8, midY);
   }
 
   ctx.restore();
 }
 
-/* 繪製 2D 單層視圖 */
 function render2DPalllet(plan) {
   const canvas = document.getElementById('simCanvas');
   if (!canvas) return;
@@ -844,7 +1141,7 @@ function render2DPalllet(plan) {
       ctx.fillText(`#${b.label}`, bx + bw / 2, by + bh / 2 - 3);
       ctx.fillStyle = '#fde047';
       ctx.font = 'bold 9px monospace';
-      ctx.fillText(`${b.width.toFixed(1)}×${b.height.toFixed(1)}`, bx + bw / 2, by + bh / 2 + 8);
+      ctx.fillText(`${plan.displayBoxL}×${plan.displayBoxW}`, bx + bw / 2, by + bh / 2 + 8);
     } else {
       ctx.fillText(`#${b.label}`, bx + bw / 2, by + bh / 2 + 3);
     }
@@ -854,7 +1151,7 @@ function render2DPalllet(plan) {
     const spanLPx = parseFloat(plan.totalSpanL) * scale;
     const spanWPx = parseFloat(plan.totalSpanW) * scale;
 
-    ctx.strokeStyle = 'rgba(250, 204, 21, 0.4)';
+    ctx.strokeStyle = BRAND_BROWN;
     ctx.setLineDash([3, 3]);
     
     ctx.beginPath();
@@ -865,24 +1162,54 @@ function render2DPalllet(plan) {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    drawDimensionLine(ctx, startX, startY + spanWPx + 15, startX + spanLPx, startY + spanWPx + 15, `${plan.totalSpanL} cm`, false);
-    drawDimensionLine(ctx, startX + spanLPx + 15, startY, startX + spanLPx + 15, startY + spanWPx, `${plan.totalSpanW} cm`, true);
+    drawDimensionLine(ctx, startX, startY + spanWPx + 15, startX + spanLPx, startY + spanWPx + 15, `${plan.displaySpanL} cm`, false);
+    drawDimensionLine(ctx, startX + spanLPx + 15, startY, startX + spanLPx + 15, startY + spanWPx, `${plan.displaySpanW} cm`, true);
   }
 
   ctx.restore();
 }
 
-/* 匯出 2D 平面排版黑白 JPG 圖稿 */
-function export2DBlackWhiteJPG() {
+// 繪製底部專用數據面板
+function drawExportFooterBar(ctx, w, h, plan) {
+  const barY = h - 90;
+  
+  ctx.strokeStyle = '#1e293b';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(40, barY);
+  ctx.lineTo(w - 40, barY);
+  ctx.stroke();
+
+  // 區塊 1: 單層箱數 / 總箱數
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#60a5fa';
+  ctx.font = 'bold 13px sans-serif';
+  ctx.fillText('單層箱數 / 總箱數', 60, barY + 28);
+  
+  ctx.fillStyle = '#93c5fd';
+  ctx.font = 'bold 20px monospace';
+  ctx.fillText(`${plan.perLayer} 箱 | ${plan.totalBoxes} 箱`, 60, barY + 58);
+
+  // 區塊 2: 堆疊層數 (總高) / 當前層總長寬
+  ctx.fillStyle = '#34d399';
+  ctx.font = 'bold 13px sans-serif';
+  ctx.fillText('堆疊層數 (總高) / 當前層總長寬', w / 2, barY + 28);
+  
+  ctx.fillStyle = '#6ee7b7';
+  ctx.font = 'bold 20px monospace';
+  ctx.fillText(`${plan.maxLayers} 層 (${plan.displaySpanH} cm) | ${plan.displaySpanL} × ${plan.displaySpanW} cm`, w / 2, barY + 58);
+}
+
+// 2D 彩色 JPG 匯出 (附下方雙數據欄)
+function export2DColorJPG() {
   if (!currentPlan) return;
 
   const exportCanvas = document.createElement('canvas');
-  const w = 1200, h = 1000;
+  const w = 1200, h = 1100;
   exportCanvas.width = w; exportCanvas.height = h;
   const ctx = exportCanvas.getContext('2d');
 
-  // 白底黑線
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = '#05070a';
   ctx.fillRect(0, 0, w, h);
 
   const targetLayerIdx = (selectedLayerType === 'even' && currentPlan.layers.length > 1) ? 1 : 0;
@@ -893,57 +1220,49 @@ function export2DBlackWhiteJPG() {
   const pHeightPx = PALLET_W * scale;
 
   const startX = (w - pWidthPx) / 2;
-  const startY = (h - pHeightPx) / 2 - 20;
+  const startY = (h - pHeightPx) / 2 - 50;
 
-  // 1. 畫棧板外邊框 (虛線)
-  ctx.strokeStyle = '#000000';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([6, 6]);
-  ctx.strokeRect(startX, startY, pWidthPx, pHeightPx);
-  ctx.setLineDash([]);
+  ctx.fillStyle = '#334155';
+  ctx.fillRect(startX, startY, pWidthPx, pHeightPx);
 
-  // 棧板尺寸文字標記
-  ctx.fillStyle = '#000000';
-  ctx.font = 'bold 14px sans-serif';
+  ctx.fillStyle = '#f8fafc';
+  ctx.font = 'bold 16px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(`PALLET: 120.0 × 100.0 cm (${selectedLayerType.toUpperCase()} LAYER)`, w / 2, startY - 20);
 
-  // 2. 畫紙箱白底黑線
   targetLayerBoxes.forEach((b, idx) => {
     const bx = startX + b.x * scale;
     const by = startY + b.y * scale;
     const bw = b.width * scale;
     const bh = b.height * scale;
 
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(bx, by, bw, bh);
-    ctx.strokeStyle = '#000000';
+    ctx.fillStyle = (targetLayerIdx % 2 === 0) ? 'rgba(37, 99, 235, 0.85)' : 'rgba(16, 185, 129, 0.85)';
+    ctx.fillRect(bx + 2, by + 2, bw - 4, bh - 4);
+    ctx.strokeStyle = '#93c5fd';
     ctx.lineWidth = 2;
-    ctx.strokeRect(bx, by, bw, bh);
+    ctx.strokeRect(bx + 2, by + 2, bw - 4, bh - 4);
 
-    // 文字
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 16px monospace';
     ctx.textAlign = 'center';
 
     if (showDimensions && idx === 0) {
       ctx.fillText(`#${b.label}`, bx + bw / 2, by + bh / 2 - 6);
+      ctx.fillStyle = '#fde047';
       ctx.font = 'bold 14px monospace';
-      ctx.fillText(`${b.width.toFixed(1)}×${b.height.toFixed(1)}`, bx + bw / 2, by + bh / 2 + 14);
+      ctx.fillText(`${currentPlan.displayBoxL}×${currentPlan.displayBoxW}`, bx + bw / 2, by + bh / 2 + 14);
     } else {
       ctx.fillText(`#${b.label}`, bx + bw / 2, by + bh / 2 + 5);
     }
   });
 
-  // 3. 畫尺寸標註線 (純黑)
   if (showDimensions && parseFloat(currentPlan.totalSpanL) > 0 && parseFloat(currentPlan.totalSpanW) > 0) {
     const spanLPx = parseFloat(currentPlan.totalSpanL) * scale;
     const spanWPx = parseFloat(currentPlan.totalSpanW) * scale;
 
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = BRAND_BROWN;
+    ctx.lineWidth = 2;
 
-    // 水平標註 (總長)
     const lineY = startY + spanWPx + 35;
     ctx.beginPath();
     ctx.moveTo(startX, lineY); ctx.lineTo(startX + spanLPx, lineY);
@@ -951,13 +1270,10 @@ function export2DBlackWhiteJPG() {
     ctx.moveTo(startX + spanLPx, startY + spanWPx + 10); ctx.lineTo(startX + spanLPx, lineY + 10);
     ctx.stroke();
 
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(startX + spanLPx / 2 - 40, lineY - 10, 80, 20);
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = BRAND_BROWN;
     ctx.font = 'bold 15px monospace';
-    ctx.fillText(`${currentPlan.totalSpanL} cm`, startX + spanLPx / 2, lineY + 5);
+    ctx.fillText(`${currentPlan.displaySpanL} cm`, startX + spanLPx / 2, lineY + 18);
 
-    // 垂直標註 (總寬)
     const lineX = startX + spanLPx + 35;
     ctx.beginPath();
     ctx.moveTo(lineX, startY); ctx.lineTo(lineX, startY + spanWPx);
@@ -965,217 +1281,439 @@ function export2DBlackWhiteJPG() {
     ctx.moveTo(startX + spanLPx + 10, startY + spanWPx); ctx.lineTo(lineX + 10, startY + spanWPx);
     ctx.stroke();
 
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(lineX - 10, startY + spanWPx / 2 - 12, 80, 24);
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = BRAND_BROWN;
     ctx.textAlign = 'left';
-    ctx.fillText(`${currentPlan.totalSpanW} cm`, lineX - 5, startY + spanWPx / 2 + 5);
+    ctx.fillText(`${currentPlan.displaySpanW} cm`, lineX + 10, startY + spanWPx / 2 + 5);
   }
 
-  // 底部統計資訊
-  ctx.fillStyle = '#000000';
-  ctx.font = 'bold 15px monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText(`Per Layer: ${currentPlan.perLayer} boxes | Total: ${currentPlan.totalBoxes} boxes | Layers: ${currentPlan.maxLayers} (${currentPlan.stackHeight} cm)`, w / 2, h - 40);
+  // 繪製底部雙數據欄
+  drawExportFooterBar(ctx, w, h, currentPlan);
 
-  // 下載 JPG
   const dataURL = exportCanvas.toDataURL('image/jpeg', 0.95);
   const link = document.createElement('a');
-  link.download = `pallet-layout-${selectedLayerType}.jpg`;
+  link.download = `pallet-layout-2D.jpg`;
   link.href = dataURL;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 }
 
-/* 實體投影計算 */
-function getFrontVisibleSegments(boxes, palletDimension) {
-  let events = [];
-  boxes.forEach(b => {
-    events.push({ pos: b.x, type: 'start', y: b.y });
-    events.push({ pos: b.x + b.width, type: 'end', y: b.y });
-  });
-  
-  let allPoints = [0, palletDimension];
-  boxes.forEach(b => { allPoints.push(b.x); allPoints.push(b.x + b.width); });
-  allPoints = Array.from(new Set(allPoints)).sort((a,b) => a - b);
+// 3D 彩色高解析 JPG 匯出 (附下方雙數據欄)
+function export3DColorJPG() {
+  if (!renderer3D || !scene3D || !camera3D || !currentPlan) return;
+  render3DFrame();
 
-  let segments = [];
-  for (let i = 0; i < allPoints.length - 1; i++) {
-    let x1 = allPoints[i];
-    let x2 = allPoints[i+1];
-    if (x2 - x1 < 1e-4) continue;
-    let midX = (x1 + x2) / 2;
+  const webglCanvas = renderer3D.domElement;
+  const exportCanvas = document.createElement('canvas');
+  const w = webglCanvas.width;
+  const h = webglCanvas.height + 120; // 預留底部數據欄空間
+  exportCanvas.width = w;
+  exportCanvas.height = h;
+  const ctx = exportCanvas.getContext('2d');
 
-    let frontBox = null;
-    let maxY = -Infinity;
+  // 底色
+  ctx.fillStyle = '#05070a';
+  ctx.fillRect(0, 0, w, h);
 
-    boxes.forEach(b => {
-      if (midX >= b.x && midX <= b.x + b.width) {
-        if (b.y > maxY) {
-          maxY = b.y;
-          frontBox = b;
-        }
-      }
-    });
+  // 繪製 3D WebGL 畫面
+  ctx.drawImage(webglCanvas, 0, 0);
 
-    if (frontBox) {
-      segments.push({ x: x1, width: x2 - x1, box: frontBox });
-    }
-  }
+  // 繪製底部雙數據欄
+  drawExportFooterBar(ctx, w, h, currentPlan);
 
-  let mergedSegments = [];
-  segments.forEach(seg => {
-    if (mergedSegments.length > 0) {
-      let last = mergedSegments[mergedSegments.length - 1];
-      if (last.box === seg.box && Math.abs((last.x + last.width) - seg.x) < 1e-4) {
-        last.width += seg.width;
-        return;
-      }
-    }
-    mergedSegments.push({ x: seg.x, width: seg.width, box: seg.box });
-  });
-
-  return mergedSegments;
+  const dataURL = exportCanvas.toDataURL('image/jpeg', 0.95);
+  const link = document.createElement('a');
+  link.download = `pallet-layout-3D.jpg`;
+  link.href = dataURL;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
-/* 繪製 CAD 三視圖 */
-function renderCADOrthoView(plan) {
-  const dict = i18n[currentLang];
-  const canvas = document.getElementById('orthoCanvas');
+// ===== 手動排列引擎 =====
+function manualToCanvas(xcm, ycm) {
+  return { x: MANUAL_OFFSET_X + xcm * MANUAL_SCALE, y: MANUAL_OFFSET_Y + ycm * MANUAL_SCALE };
+}
+function manualToPallet(px, py) {
+  return { x: (px - MANUAL_OFFSET_X) / MANUAL_SCALE, y: (py - MANUAL_OFFSET_Y) / MANUAL_SCALE };
+}
+function manualSnapVal(v) {
+  return Math.round(v / MANUAL_SNAP) * MANUAL_SNAP;
+}
+
+function manualHitTest(xcm, ycm) {
+  const currentBoxes = getCurrentManualBoxes();
+  for (let i = currentBoxes.length - 1; i >= 0; i--) {
+    const b = currentBoxes[i];
+    if (xcm >= b.x && xcm <= b.x + b.width && ycm >= b.y && ycm <= b.y + b.height) return b;
+  }
+  return null;
+}
+
+function rectanglesOverlap(a, b) {
+  return !(a.x + a.width <= b.x || b.x + b.width <= a.x || a.y + a.height <= b.y || b.y + b.height <= a.y);
+}
+
+function manualOverlapsOthers(box, excludeId) {
+  if (box.x < -0.01 || box.y < -0.01 || box.x + box.width > PALLET_L + 0.01 || box.y + box.height > PALLET_W + 0.01) return true;
+  const currentBoxes = getCurrentManualBoxes();
+  for (const other of currentBoxes) {
+    if (other.id === excludeId) continue;
+    if (rectanglesOverlap(box, other)) return true;
+  }
+  return false;
+}
+
+function manualFindFreeSpot(width, height) {
+  const step = 1;
+  for (let y = 0; y <= PALLET_W - height + 1e-6; y += step) {
+    for (let x = 0; x <= PALLET_L - width + 1e-6; x += step) {
+      const candidate = { x, y, width, height };
+      if (!manualOverlapsOthers(candidate, null)) return { x, y };
+    }
+  }
+  return null;
+}
+
+function manualCurrentBoxDims() {
+  const rawL = parseFloat(document.getElementById('boxL').value) || 40;
+  const rawW = parseFloat(document.getElementById('boxW').value) || 30;
+  return {
+    l: sanitizeInput(rawL, 5, 120, 40),
+    w: sanitizeInput(rawW, 5, 100, 30)
+  };
+}
+
+function manualAddBox() {
+  const { l, w } = manualCurrentBoxDims();
+  const spot = manualFindFreeSpot(l, w);
+  if (!spot) {
+    alert('棧板上無足夠空間放置新箱子。');
+    return;
+  }
+  const box = { id: manualNextId++, x: spot.x, y: spot.y, width: l, height: w, rotation: 0 };
+  const currentBoxes = getCurrentManualBoxes();
+  currentBoxes.push(box);
+  manualSelectedId = box.id;
+  renderManualPallet();
+  if (useManualLayers) updatePacking();
+}
+
+function manualRotateSelected() {
+  if (manualSelectedId == null) return;
+  const currentBoxes = getCurrentManualBoxes();
+  const box = currentBoxes.find(b => b.id === manualSelectedId);
+  if (!box) return;
+  const rotated = { x: box.x, y: box.y, width: box.height, height: box.width };
+  if (manualOverlapsOthers(rotated, box.id)) {
+    alert('旋轉後會與其他箱子重疊或超出棧板範圍。');
+    return;
+  }
+  box.width = rotated.width;
+  box.height = rotated.height;
+  box.rotation = (box.rotation + 90) % 180;
+  renderManualPallet();
+  if (useManualLayers) updatePacking();
+}
+
+function manualDeleteSelected() {
+  if (manualSelectedId == null) return;
+  let currentBoxes = getCurrentManualBoxes();
+  currentBoxes = currentBoxes.filter(b => b.id !== manualSelectedId);
+  setCurrentManualBoxes(currentBoxes);
+  manualSelectedId = null;
+  renderManualPallet();
+  if (useManualLayers) updatePacking();
+}
+
+function manualClearCurrentLayer() {
+  if (getCurrentManualBoxes().length > 0 && !confirm(`確定要清空目前【${manualEditLayer === 'odd' ? '奇數層' : '偶數層'}】的所有箱子嗎？`)) return;
+  setCurrentManualBoxes([]);
+  manualSelectedId = null;
+  renderManualPallet();
+  if (useManualLayers) updatePacking();
+}
+
+function toggleUseManualLayers() {
+  const toggle = document.getElementById('useManualLayersToggle');
+  useManualLayers = toggle ? toggle.checked : false;
+  if (useManualLayers && manualOddBoxes.length === 0 && manualEvenBoxes.length === 0) {
+    alert('請先在手動模式排好箱子，並按「💾 儲存自訂排版」。');
+    useManualLayers = false;
+    if (toggle) toggle.checked = false;
+    return;
+  }
+  updatePacking();
+}
+
+function renderManualPallet() {
+  const canvas = document.getElementById('manualCanvas');
   if (!canvas) return;
-  const ctx = setupCanvasHD(canvas, 720, 540);
-  ctx.clearRect(0, 0, 720, 540);
+  const ctx = setupCanvasHD(canvas, 620, 540);
+  ctx.clearRect(0, 0, 620, 540);
 
-  const scale = 1.35;
-  const boxH = plan.boxH;
+  const origin = manualToCanvas(0, 0);
+  const pW = PALLET_L * MANUAL_SCALE;
+  const pH = PALLET_W * MANUAL_SCALE;
 
-  // 1. 俯視圖
-  ctx.save();
-  ctx.translate(170, 150);
   ctx.fillStyle = '#1e293b';
-  ctx.fillRect(-PALLET_L * scale / 2, -PALLET_W * scale / 2, PALLET_L * scale, PALLET_W * scale);
-  ctx.strokeStyle = '#38bdf8';
+  ctx.fillRect(origin.x - 8, origin.y - 8, pW + 16, pH + 16);
+  ctx.strokeStyle = '#475569';
   ctx.lineWidth = 1.5;
-  ctx.strokeRect(-PALLET_L * scale / 2, -PALLET_W * scale / 2, PALLET_L * scale, PALLET_W * scale);
-  
-  plan.layers[0].boxes.forEach(b => {
-    ctx.fillStyle = 'rgba(37, 99, 235, 0.4)';
-    ctx.fillRect(-PALLET_L * scale / 2 + b.x * scale, -PALLET_W * scale / 2 + b.y * scale, b.width * scale, b.height * scale);
-    ctx.strokeStyle = '#93c5fd';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(-PALLET_L * scale / 2 + b.x * scale, -PALLET_W * scale / 2 + b.y * scale, b.width * scale, b.height * scale);
+  ctx.strokeRect(origin.x - 8, origin.y - 8, pW + 16, pH + 16);
+
+  ctx.fillStyle = '#334155';
+  ctx.fillRect(origin.x, origin.y, pW, pH);
+
+  ctx.strokeStyle = 'rgba(148,163,184,0.08)';
+  ctx.lineWidth = 0.5;
+  for (let gx = 0; gx <= PALLET_L; gx += MANUAL_GRID_MINOR) {
+    const p = manualToCanvas(gx, 0);
+    ctx.beginPath(); ctx.moveTo(p.x, origin.y); ctx.lineTo(p.x, origin.y + pH); ctx.stroke();
+  }
+  for (let gy = 0; gy <= PALLET_W; gy += MANUAL_GRID_MINOR) {
+    const p = manualToCanvas(0, gy);
+    ctx.beginPath(); ctx.moveTo(origin.x, p.y); ctx.lineTo(origin.x + pW, p.y); ctx.stroke();
+  }
+
+  ctx.strokeStyle = 'rgba(148,163,184,0.28)';
+  ctx.lineWidth = 1;
+  for (let gx = 0; gx <= PALLET_L; gx += MANUAL_GRID_MAJOR) {
+    const p = manualToCanvas(gx, 0);
+    ctx.beginPath(); ctx.moveTo(p.x, origin.y); ctx.lineTo(p.x, origin.y + pH); ctx.stroke();
+  }
+  for (let gy = 0; gy <= PALLET_W; gy += MANUAL_GRID_MAJOR) {
+    const p = manualToCanvas(0, gy);
+    ctx.beginPath(); ctx.moveTo(origin.x, p.y); ctx.lineTo(origin.x + pW, p.y); ctx.stroke();
+  }
+
+  const currentBoxes = getCurrentManualBoxes();
+  const isOdd = manualEditLayer === 'odd';
+
+  currentBoxes.forEach((b, idx) => {
+    const p = manualToCanvas(b.x, b.y);
+    const bw = b.width * MANUAL_SCALE;
+    const bh = b.height * MANUAL_SCALE;
+    const isSelected = b.id === manualSelectedId;
+    const overlapping = manualOverlapsOthers(b, b.id);
+
+    const normalColor = isOdd ? 'rgba(37,99,235,0.75)' : 'rgba(16,185,129,0.75)';
+    ctx.fillStyle = overlapping ? 'rgba(244,63,94,0.65)' : (isSelected ? 'rgba(245,158,11,0.85)' : normalColor);
+    ctx.fillRect(p.x + 1, p.y + 1, bw - 2, bh - 2);
+    ctx.strokeStyle = isSelected ? '#fde047' : '#93c5fd';
+    ctx.lineWidth = isSelected ? 2 : 1;
+    ctx.strokeRect(p.x + 1, p.y + 1, bw - 2, bh - 2);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`#${idx + 1} (${b.width.toFixed(0)}×${b.height.toFixed(0)})`, p.x + bw / 2, p.y + bh / 2 + 3);
   });
-  ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 11px monospace'; ctx.fillText(dict.topViewLbl, -70, -PALLET_W * scale / 2 - 12);
-  ctx.restore();
 
-  // 2. 正視圖
-  ctx.save();
-  ctx.translate(170, 420);
-  
-  ctx.fillStyle = '#475569';
-  ctx.fillRect(-PALLET_L * scale / 2, 0, PALLET_L * scale, 10);
-  ctx.strokeStyle = '#94a3b8';
-  ctx.strokeRect(-PALLET_L * scale / 2, 0, PALLET_L * scale, 10);
-  
-  for (let l = 0; l < plan.maxLayers; l++) {
-    const yPos = - (l + 1) * boxH * scale;
-    const boxes = plan.layers[l].boxes;
-    const fillColor = (l % 2 === 0) ? '#1e3a8a' : '#064e3b';
-    const edgeColor = (l % 2 === 0) ? '#60a5fa' : '#34d399';
-
-    const frontBoxes = getFrontVisibleSegments(boxes, PALLET_L);
-
-    frontBoxes.forEach(seg => {
-      ctx.fillStyle = fillColor;
-      ctx.fillRect(-PALLET_L * scale / 2 + seg.x * scale, yPos, seg.width * scale, boxH * scale);
-      ctx.strokeStyle = edgeColor;
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(-PALLET_L * scale / 2 + seg.x * scale, yPos, seg.width * scale, boxH * scale);
-    });
+  const countEl = document.getElementById('manual-count');
+  const utilEl = document.getElementById('manual-util');
+  if (countEl && utilEl) {
+    const usedArea = currentBoxes.reduce((s, b) => s + b.width * b.height, 0);
+    countEl.innerText = currentBoxes.length;
+    utilEl.innerText = ((usedArea / (PALLET_L * PALLET_W)) * 100).toFixed(1) + '%';
   }
-  ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 11px monospace'; ctx.fillText(`${dict.frontViewLbl}${plan.stackHeight}cm)`, -100, 26);
-  ctx.restore();
-
-  // 3. 側視圖
-  ctx.save();
-  ctx.translate(530, 420);
-  
-  ctx.fillStyle = '#475569';
-  ctx.fillRect(-PALLET_W * scale / 2, 0, PALLET_W * scale, 10);
-  ctx.strokeStyle = '#94a3b8';
-  ctx.strokeRect(-PALLET_W * scale / 2, 0, PALLET_W * scale, 10);
-
-  for (let l = 0; l < plan.maxLayers; l++) {
-    const yPos = - (l + 1) * boxH * scale;
-    const boxes = plan.layers[l].boxes;
-    const fillColor = (l % 2 === 0) ? '#1e3a8a' : '#064e3b';
-    const edgeColor = (l % 2 === 0) ? '#60a5fa' : '#34d399';
-
-    const sideBoxes = boxes.map(b => ({ x: b.y, width: b.height, y: b.x }));
-    const visibleSideBoxes = getFrontVisibleSegments(sideBoxes, PALLET_W);
-
-    visibleSideBoxes.forEach(seg => {
-      ctx.fillStyle = fillColor;
-      ctx.fillRect(-PALLET_W * scale / 2 + seg.x * scale, yPos, seg.width * scale, boxH * scale);
-      ctx.strokeStyle = edgeColor;
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(-PALLET_W * scale / 2 + seg.x * scale, yPos, seg.width * scale, boxH * scale);
-    });
-  }
-  ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 11px monospace'; ctx.fillText(dict.sideViewLbl, -75, 26);
-  ctx.restore();
 }
 
-/* 3D 尺寸標註貼圖產生器 */
-function create3DTextSprite(text, textColor = '#facc15') {
+function setupManualCanvasInteractions() {
+  const canvas = document.getElementById('manualCanvas');
+  if (!canvas) return;
+
+  function getMouseCm(e) {
+    const rect = canvas.getBoundingClientRect();
+    return manualToPallet(e.clientX - rect.left, e.clientY - rect.top);
+  }
+
+  canvas.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    const { x: xcm, y: ycm } = getMouseCm(e);
+    const hit = manualHitTest(xcm, ycm);
+
+    if (hit) {
+      manualSelectedId = hit.id;
+      manualDrag = { id: hit.id, offsetX: xcm - hit.x, offsetY: ycm - hit.y, lastValidX: hit.x, lastValidY: hit.y };
+    } else {
+      const { l, w } = manualCurrentBoxDims();
+      const x = Math.max(0, Math.min(PALLET_L - l, manualSnapVal(xcm - l / 2)));
+      const y = Math.max(0, Math.min(PALLET_W - w, manualSnapVal(ycm - w / 2)));
+      const candidate = { x, y, width: l, height: w };
+      manualSelectedId = null;
+      if (!manualOverlapsOthers(candidate, null)) {
+        const box = { id: manualNextId++, x, y, width: l, height: w, rotation: 0 };
+        getCurrentManualBoxes().push(box);
+        manualSelectedId = box.id;
+        manualDrag = { id: box.id, offsetX: xcm - x, offsetY: ycm - y, lastValidX: x, lastValidY: y };
+      }
+    }
+    renderManualPallet();
+    if (useManualLayers) updatePacking();
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!manualDrag || currentTab !== 'manualTab') return;
+    const { x: xcm, y: ycm } = getMouseCm(e);
+    const box = getCurrentManualBoxes().find(b => b.id === manualDrag.id);
+    if (!box) return;
+
+    let nx = manualSnapVal(xcm - manualDrag.offsetX);
+    let ny = manualSnapVal(ycm - manualDrag.offsetY);
+    nx = Math.max(0, Math.min(PALLET_L - box.width, nx));
+    ny = Math.max(0, Math.min(PALLET_W - box.height, ny));
+
+    const SNAP_DIST = 1.5;
+    const snapX = [0, PALLET_L - box.width];
+    const snapY = [0, PALLET_W - box.height];
+    getCurrentManualBoxes().forEach(other => {
+      if (other.id === box.id) return;
+      snapX.push(other.x, other.x + other.width, other.x + other.width - box.width, other.x - box.width);
+      snapY.push(other.y, other.y + other.height, other.y + other.height - box.height, other.y - box.height);
+    });
+    for (const sx of snapX) { if (Math.abs(nx - sx) < SNAP_DIST) { nx = sx; break; } }
+    for (const sy of snapY) { if (Math.abs(ny - sy) < SNAP_DIST) { ny = sy; break; } }
+
+    box.x = nx;
+    box.y = ny;
+    renderManualPallet();
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!manualDrag) return;
+    const box = getCurrentManualBoxes().find(b => b.id === manualDrag.id);
+    if (box && manualOverlapsOthers(box, box.id)) {
+      box.x = manualDrag.lastValidX;
+      box.y = manualDrag.lastValidY;
+      renderManualPallet();
+    }
+    manualDrag = null;
+    if (useManualLayers) updatePacking();
+  });
+
+  canvas.addEventListener('dblclick', (e) => {
+    const { x: xcm, y: ycm } = getMouseCm(e);
+    const hit = manualHitTest(xcm, ycm);
+    if (hit) { manualSelectedId = hit.id; manualRotateSelected(); }
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (currentTab !== 'manualTab') return;
+    if (e.key === 'r' || e.key === 'R') manualRotateSelected();
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      e.preventDefault();
+      manualDeleteSelected();
+    }
+  });
+}
+
+// ===== 3D CAD 渲染引擎 (無底框文字 + 支援標註拖曳) =====
+function create3DTextSprite(text, textColor = '#ffffff') {
   const canvas = document.createElement('canvas');
   canvas.width = 256; canvas.height = 64;
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = 'rgba(5, 7, 10, 0.85)';
-  ctx.fillRect(10, 8, 236, 48);
-  ctx.strokeStyle = textColor;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(10, 8, 236, 48);
   
+  ctx.clearRect(0, 0, 256, 64);
   ctx.fillStyle = textColor;
-  ctx.font = 'bold 22px monospace';
+  ctx.font = 'bold 30px -apple-system, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, 128, 32);
 
   const texture = new THREE.CanvasTexture(canvas);
-  const spriteMat = new THREE.SpriteMaterial({ map: texture });
+  const spriteMat = new THREE.SpriteMaterial({ map: texture, depthTest: false, depthWrite: false });
   const sprite = new THREE.Sprite(spriteMat);
-  sprite.scale.set(30, 8, 1);
+  sprite.renderOrder = 999;
+  sprite.scale.set(22, 5.5, 1);
+  sprite.userData = { isDraggable: true, text: text };
   return sprite;
 }
 
-/* 建立 3D 空間標註線段與數字 */
-function create3DDimensionLine(p1, p2, text) {
+function create3DDimensionLine(p1, p2, text, colorHex = 0xffffff, offsetSprite = {x:0, y:3, z:0}) {
   const group = new THREE.Group();
-  const mat = new THREE.LineBasicMaterial({ color: 0xfacc15, linewidth: 2 });
+  const mat = new THREE.LineBasicMaterial({ color: colorHex, linewidth: 2, depthTest: false });
   const geo = new THREE.BufferGeometry().setFromPoints([p1, p2]);
   const line = new THREE.Line(geo, mat);
+  line.renderOrder = 998;
   group.add(line);
 
   const mid = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
-  const sprite = create3DTextSprite(text);
+  const sprite = create3DTextSprite(text, '#ffffff');
   sprite.position.copy(mid);
-  sprite.position.y += 4;
+  sprite.position.x += offsetSprite.x;
+  sprite.position.y += offsetSprite.y;
+  sprite.position.z += offsetSprite.z;
   group.add(sprite);
 
+  draggableSprites.push(sprite);
   return group;
 }
 
-/* CAD 3D 按需單幀渲染 */
 function render3DFrame() {
   if (renderer3D && scene3D && camera3D && currentTab === 'renderTab') {
     renderer3D.render(scene3D, camera3D);
   }
 }
 
-/* 按需初始化 3D */
+function setup3DDragControls() {
+  const container = document.getElementById('webglContainer');
+  if (!container) return;
+
+  function updateMouseCoords(e) {
+    const rect = renderer3D.domElement.getBoundingClientRect();
+    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  }
+
+  renderer3D.domElement.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    updateMouseCoords(e);
+    raycaster.setFromCamera(mouse, camera3D);
+    const intersects = raycaster.intersectObjects(draggableSprites);
+
+    if (intersects.length > 0) {
+      controls3D.enabled = false;
+      draggingSprite = intersects[0].object;
+
+      const normal = new THREE.Vector3();
+      camera3D.getWorldDirection(normal).negate();
+      dragPlane.setFromNormalAndCoplanarPoint(normal, draggingSprite.position);
+
+      if (raycaster.ray.intersectPlane(dragPlane, dragIntersection)) {
+        dragOffset.copy(draggingSprite.position).sub(dragIntersection);
+      }
+      renderer3D.domElement.style.cursor = 'grabbing';
+    }
+  });
+
+  renderer3D.domElement.addEventListener('pointermove', (e) => {
+    updateMouseCoords(e);
+    if (draggingSprite) {
+      raycaster.setFromCamera(mouse, camera3D);
+      if (raycaster.ray.intersectPlane(dragPlane, dragIntersection)) {
+        draggingSprite.position.copy(dragIntersection.add(dragOffset));
+        render3DFrame();
+      }
+    } else {
+      raycaster.setFromCamera(mouse, camera3D);
+      const intersects = raycaster.intersectObjects(draggableSprites);
+      renderer3D.domElement.style.cursor = intersects.length > 0 ? 'grab' : 'default';
+    }
+  });
+
+  const stopDragging = () => {
+    if (draggingSprite) {
+      draggingSprite = null;
+      controls3D.enabled = true;
+      renderer3D.domElement.style.cursor = 'default';
+    }
+  };
+
+  renderer3D.domElement.addEventListener('pointerup', stopDragging);
+  renderer3D.domElement.addEventListener('pointerleave', stopDragging);
+}
+
 function init3DRenderer() {
   if (is3DInitialized) return;
   const container = document.getElementById('webglContainer');
@@ -1199,13 +1737,13 @@ function init3DRenderer() {
   camera3D.position.set(d, d * 0.85, d);
   camera3D.lookAt(0, 30, 0);
 
-  renderer3D = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+  renderer3D = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, powerPreference: "high-performance" });
   renderer3D.setSize(w, h);
   renderer3D.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   container.appendChild(renderer3D.domElement);
 
   controls3D = new THREE.OrbitControls(camera3D, renderer3D.domElement);
-  controls3D.enableRotate = false;
+  controls3D.enableRotate = true;
   controls3D.enableDamping = false;
   controls3D.enableZoom = true;
   controls3D.enablePan = true;
@@ -1213,8 +1751,8 @@ function init3DRenderer() {
   
   controls3D.addEventListener('change', render3DFrame);
 
-  scene3D.add(new THREE.AmbientLight(0xffffff, 0.9));
-  const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+  scene3D.add(new THREE.AmbientLight(0xffffff, 0.85));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.1);
   dirLight.position.set(200, 400, 200);
   scene3D.add(dirLight);
 
@@ -1222,11 +1760,14 @@ function init3DRenderer() {
   gridHelper.position.y = -6;
   scene3D.add(gridHelper);
 
+  setup3DDragControls();
   is3DInitialized = true;
 }
 
 function update3DPalllet(plan) {
   if (!scene3D || !is3DInitialized) return;
+
+  draggableSprites.length = 0;
 
   if (palletGroup3D) {
     palletGroup3D.traverse((child) => {
@@ -1251,11 +1792,11 @@ function update3DPalllet(plan) {
 
   plan.layers.forEach((layerObj, layerIdx) => {
     const yPos = 3 + h / 2 + layerIdx * h;
-    const matColor = (layerIdx % 2 === 0) ? 0x1e3a8a : 0x064e3b;
-    const edgeColor = (layerIdx % 2 === 0) ? 0x60a5fa : 0x34d399;
+    const matColor = (layerIdx % 2 === 0) ? 0x059669 : 0x2563eb;
+    const edgeColor = 0x6ee7b7;
 
-    const boxMat = new THREE.MeshStandardMaterial({ color: matColor, roughness: 0.5 });
-    const edgesMat = new THREE.LineBasicMaterial({ color: edgeColor, linewidth: 1.5 });
+    const boxMat = new THREE.MeshStandardMaterial({ color: matColor, roughness: 0.45 });
+    const edgesMat = new THREE.LineBasicMaterial({ color: edgeColor, linewidth: 1 });
 
     layerObj.boxes.forEach(b => {
       const boxW = b.width - 0.2;
@@ -1278,38 +1819,73 @@ function update3DPalllet(plan) {
     });
   });
 
-  // 3D 空間動態尺寸標註（當開關開啟時顯示）
   if (showDimensions && plan) {
-    const spanL = parseFloat(plan.totalSpanL); // 第一層實際擺放總長
-    const spanW = parseFloat(plan.totalSpanW); // 第一層實際擺放總寬
-    const totalH = parseFloat(plan.stackHeight); // 實際總高
+    const spanL = parseFloat(plan.totalSpanL);
+    const spanW = parseFloat(plan.totalSpanW);
+    const totalH = plan.maxLayers * h;
 
     const startX = -PALLET_L / 2;
     const startZ = -PALLET_W / 2;
 
-    // 1. 第一層長標註
-    const dimL = create3DDimensionLine(
-      new THREE.Vector3(startX, 0, startZ + spanW + 15),
-      new THREE.Vector3(startX + spanL, 0, startZ + spanW + 15),
-      `${spanL.toFixed(1)} cm`
+    // 1. 整棧底部寬度線
+    const dimPalletW = create3DDimensionLine(
+      new THREE.Vector3(startX + spanL + 4, 1, startZ),
+      new THREE.Vector3(startX + spanL + 4, 1, startZ + spanW),
+      `${plan.displaySpanW}`,
+      0xffffff,
+      { x: 8, y: -2, z: 0 }
     );
-    palletGroup3D.add(dimL);
+    palletGroup3D.add(dimPalletW);
 
-    // 2. 第一層寬標註
-    const dimW = create3DDimensionLine(
-      new THREE.Vector3(startX + spanL + 15, 0, startZ),
-      new THREE.Vector3(startX + spanL + 15, 0, startZ + spanW),
-      `${spanW.toFixed(1)} cm`
+    // 2. 整棧底部長度線
+    const dimPalletL = create3DDimensionLine(
+      new THREE.Vector3(startX, 1, startZ + spanW + 4),
+      new THREE.Vector3(startX + spanL, 1, startZ + spanW + 4),
+      `${plan.displaySpanL}`,
+      0xffffff,
+      { x: 0, y: -2, z: 8 }
     );
-    palletGroup3D.add(dimW);
+    palletGroup3D.add(dimPalletL);
 
-    // 3. 高度標註：移動至 3D 視角中正面最左前側的垂直邊緣（前左角），確保絕不受任何遮擋
-    const dimH = create3DDimensionLine(
-      new THREE.Vector3(startX, 0, startZ + spanW + 18),
-      new THREE.Vector3(startX, totalH, startZ + spanW + 18),
-      `${plan.maxLayers}層 ${totalH.toFixed(1)}cm`
+    // 3. 整棧高度線
+    const dimPalletH = create3DDimensionLine(
+      new THREE.Vector3(startX - 6, 0, startZ + spanW + 4),
+      new THREE.Vector3(startX - 6, totalH, startZ + spanW + 4),
+      `${plan.displaySpanH}`,
+      0xffffff,
+      { x: -10, y: 0, z: 0 }
     );
-    palletGroup3D.add(dimH);
+    palletGroup3D.add(dimPalletH);
+
+    // 4. 單箱尺寸標註（頂層最外角箱）
+    const topLayer = plan.layers[plan.layers.length - 1];
+    if (topLayer && topLayer.boxes.length > 0) {
+      let cornerBox = topLayer.boxes[0];
+      topLayer.boxes.forEach(b => {
+        if ((b.x + b.width + b.y) > (cornerBox.x + cornerBox.width + cornerBox.y)) {
+          cornerBox = b;
+        }
+      });
+
+      const topY = 3 + totalH;
+      const cbX = -PALLET_L / 2 + cornerBox.x + cornerBox.width;
+      const cbZ = -PALLET_W / 2 + cornerBox.y;
+
+      const sBoxL = create3DTextSprite(`${plan.displayBoxL}`, '#ffffff');
+      sBoxL.position.set(cbX - cornerBox.width / 2, topY + 2, cbZ - 3);
+      palletGroup3D.add(sBoxL);
+      draggableSprites.push(sBoxL);
+
+      const sBoxW = create3DTextSprite(`${plan.displayBoxW}`, '#ffffff');
+      sBoxW.position.set(cbX + 4, topY + 2, cbZ + cornerBox.height / 2);
+      palletGroup3D.add(sBoxW);
+      draggableSprites.push(sBoxW);
+
+      const sBoxH = create3DTextSprite(`${plan.displayBoxH}`, '#ffffff');
+      sBoxH.position.set(cbX + 4, topY - h / 2, cbZ - 2);
+      palletGroup3D.add(sBoxH);
+      draggableSprites.push(sBoxH);
+    }
   }
 
   scene3D.add(palletGroup3D);
@@ -1339,7 +1915,9 @@ window.addEventListener('resize', () => {
 
 window.onload = function() {
   setupCanvasInteractions();
-  updateUIText();
+  setupManualCanvasInteractions();
+  handleBoxDimChange();
+  renderManualPallet();
   updatePacking();
 };
 </script>
