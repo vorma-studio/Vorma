@@ -265,7 +265,7 @@
         <!-- Tab 3: 手動排列畫布 -->
         <div id="manualTab" class="view-panel hidden flex flex-col items-center justify-center relative">
           <div class="absolute top-2 left-2 z-10 flex items-center gap-2 bg-slate-900/80 px-2.5 py-1 rounded-full border border-slate-800 text-[11px] font-mono text-slate-300">
-            <span id="manual-layer-indicator" class="text-blue-400 font-bold">ODD (奇數層)</span>
+            <span id="manual-layer-indicator" class="text-blue-400 font-bold">ODD</span>
             <span>|</span>
             <span>箱數: <b id="manual-count" class="text-emerald-400">0</b></span>
             <span>|</span>
@@ -274,8 +274,8 @@
 
           <div class="absolute top-2 right-2 z-10 flex items-center gap-1.5 py-1 px-2 text-xs">
             <span class="text-slate-400 text-[11px] mr-1 font-mono">編輯層:</span>
-            <button id="manual-btn-odd" class="layer-btn active" onclick="setManualEditLayer('odd')">ODD 奇數</button>
-            <button id="manual-btn-even" class="layer-btn" onclick="setManualEditLayer('even')">EVEN 偶數</button>
+            <button id="manual-btn-odd" class="layer-btn active" onclick="setManualEditLayer('odd')">ODD</button>
+            <button id="manual-btn-even" class="layer-btn" onclick="setManualEditLayer('even')">EVEN</button>
           </div>
 
           <canvas id="manualCanvas" style="width: 620px; height: 540px; cursor: crosshair;"></canvas>
@@ -362,35 +362,40 @@
             </div>
           </div>
 
-          <!-- 半手動覆寫標註文字 -->
-          <div class="pt-2 border-t border-slate-300/80 space-y-2">
-            <div class="text-[11px] font-bold text-slate-800 uppercase tracking-wider">標註顯示設定 (可半手動覆寫)</div>
-            <div class="grid grid-cols-3 gap-2">
-              <div>
-                <label class="text-[10px] text-slate-600 block">覆寫整棧長:</label>
-                <input type="text" id="overrideSpanL" placeholder="自動計算" oninput="updatePacking()">
-              </div>
-              <div>
-                <label class="text-[10px] text-slate-600 block">覆寫整棧寬:</label>
-                <input type="text" id="overrideSpanW" placeholder="自動計算" oninput="updatePacking()">
-              </div>
-              <div>
-                <label class="text-[10px] text-slate-600 block">覆寫整棧高:</label>
-                <input type="text" id="overrideSpanH" placeholder="自動計算" oninput="updatePacking()">
-              </div>
+          <!-- 半手動覆寫標註文字（可收折展開） -->
+          <div class="pt-2 border-t border-slate-300/80">
+            <div class="flex items-center justify-between cursor-pointer py-1 select-none" onclick="toggleOverrideSection()">
+              <span class="text-[11px] font-bold text-slate-800 uppercase tracking-wider">標註顯示設定 (可半手動覆寫)</span>
+              <span id="override-arrow-icon" class="text-slate-500 text-xs transition-transform duration-300">▼</span>
             </div>
-            <div class="grid grid-cols-3 gap-2">
-              <div>
-                <label class="text-[10px] text-slate-600 block">覆寫單箱長:</label>
-                <input type="text" id="overrideBoxL" placeholder="自動計算" oninput="updatePacking()">
+            <div id="override-fields" class="space-y-2 mt-2 hidden">
+              <div class="grid grid-cols-3 gap-2">
+                <div>
+                  <label class="text-[10px] text-slate-600 block">覆寫整棧長:</label>
+                  <input type="text" id="overrideSpanL" placeholder="自動計算" oninput="updatePacking()">
+                </div>
+                <div>
+                  <label class="text-[10px] text-slate-600 block">覆寫整棧寬:</label>
+                  <input type="text" id="overrideSpanW" placeholder="自動計算" oninput="updatePacking()">
+                </div>
+                <div>
+                  <label class="text-[10px] text-slate-600 block">覆寫整棧高:</label>
+                  <input type="text" id="overrideSpanH" placeholder="自動計算" oninput="updatePacking()">
+                </div>
               </div>
-              <div>
-                <label class="text-[10px] text-slate-600 block">覆寫單箱寬:</label>
-                <input type="text" id="overrideBoxW" placeholder="自動計算" oninput="updatePacking()">
-              </div>
-              <div>
-                <label class="text-[10px] text-slate-600 block">覆寫單箱高:</label>
-                <input type="text" id="overrideBoxH" placeholder="自動計算" oninput="updatePacking()">
+              <div class="grid grid-cols-3 gap-2">
+                <div>
+                  <label class="text-[10px] text-slate-600 block">覆寫單箱長:</label>
+                  <input type="text" id="overrideBoxL" placeholder="自動計算" oninput="updatePacking()">
+                </div>
+                <div>
+                  <label class="text-[10px] text-slate-600 block">覆寫單箱寬:</label>
+                  <input type="text" id="overrideBoxW" placeholder="自動計算" oninput="updatePacking()">
+                </div>
+                <div>
+                  <label class="text-[10px] text-slate-600 block">覆寫單箱高:</label>
+                  <input type="text" id="overrideBoxH" placeholder="自動計算" oninput="updatePacking()">
+                </div>
               </div>
             </div>
           </div>
@@ -429,10 +434,10 @@
         <div class="card-content px-4 pb-4 space-y-3">
           <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl">
             <button id="card-btn-odd" onclick="setManualEditLayer('odd')" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-[#754E24] text-white shadow">
-              編輯奇數層 (ODD)
+              ODD
             </button>
             <button id="card-btn-even" onclick="setManualEditLayer('even')" class="flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-700 hover:bg-slate-200">
-              編輯偶數層 (EVEN)
+              EVEN
             </button>
           </div>
 
@@ -588,12 +593,12 @@ function setManualEditLayer(layer) {
   if (layer === 'odd') {
     cardBtnOdd.className = "flex-1 py-1.5 text-xs font-bold rounded-lg bg-[#754E24] text-white shadow";
     cardBtnEven.className = "flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-700 hover:bg-slate-200";
-    document.getElementById('manual-layer-indicator').innerText = "ODD (奇數層)";
+    document.getElementById('manual-layer-indicator').innerText = "ODD";
     document.getElementById('manual-layer-indicator').className = "text-[#a3703b] font-bold";
   } else {
     cardBtnOdd.className = "flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-700 hover:bg-slate-200";
     cardBtnEven.className = "flex-1 py-1.5 text-xs font-bold rounded-lg bg-emerald-700 text-white shadow";
-    document.getElementById('manual-layer-indicator').innerText = "EVEN (偶數層)";
+    document.getElementById('manual-layer-indicator').innerText = "EVEN";
     document.getElementById('manual-layer-indicator').className = "text-emerald-400 font-bold";
   }
 
@@ -651,9 +656,9 @@ function manualApplyBothLayers() {
   }
   document.getElementById('useManualLayersToggle').checked = true;
   useManualLayers = true;
-  document.getElementById('manual-header-status').innerText = `已儲存：奇數層(${manualOddBoxes.length}箱) / 偶數層(${manualEvenBoxes.length}箱)`;
+  document.getElementById('manual-header-status').innerText = `已儲存：ODD(${manualOddBoxes.length}箱) / EVEN(${manualEvenBoxes.length}箱)`;
   updatePacking();
-  alert(`自訂排版已儲存！\n奇數層：${manualOddBoxes.length} 箱\n偶數層：${manualEvenBoxes.length} 箱`);
+  alert(`自訂排版已儲存！\nODD：${manualOddBoxes.length} 箱\nEVEN：${manualEvenBoxes.length} 箱`);
 }
 
 function toggleDimensionMode(checked) {
@@ -710,6 +715,13 @@ function toggleAccordion(cardId) {
   const content = card.querySelector('.card-content');
   const arrow = card.querySelector('.arrow-icon');
   content.classList.toggle('hidden');
+  arrow.classList.toggle('rotate-180');
+}
+
+function toggleOverrideSection() {
+  const fields = document.getElementById('override-fields');
+  const arrow = document.getElementById('override-arrow-icon');
+  fields.classList.toggle('hidden');
   arrow.classList.toggle('rotate-180');
 }
 
@@ -1445,7 +1457,7 @@ function manualDeleteSelected() {
 }
 
 function manualClearCurrentLayer() {
-  if (getCurrentManualBoxes().length > 0 && !confirm(`確定要清空目前【${manualEditLayer === 'odd' ? '奇數層' : '偶數層'}】的所有箱子嗎？`)) return;
+  if (getCurrentManualBoxes().length > 0 && !confirm(`確定要清空目前【${manualEditLayer === 'odd' ? 'ODD' : 'EVEN'}】的所有箱子嗎？`)) return;
   setCurrentManualBoxes([]);
   manualSelectedId = null;
   renderManualPallet();
