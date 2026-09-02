@@ -186,26 +186,32 @@
 </head>
 <body class="flex flex-col h-screen w-screen overflow-hidden">
 
-  <!-- 頂部 Header -->
+  <!-- 頂部 Header：形式、標籤、按鈕與圓角尺寸完全參考 index[cite: 2] -->
   <header class="h-11 px-6 flex items-center justify-between border-b border-slate-800/40 bg-[#05070a] shrink-0">
     <div class="flex items-center gap-3">
       <span class="text-lg font-black tracking-widest text-slate-100">VORMA</span>
     </div>
 
-    <!-- 右側功能選單 -->
+    <!-- 右側功能選單與小巧語言切換鈕 (完全對齊 index)[cite: 2] -->
     <div class="flex items-center gap-3">
-      <select id="moduleSelect" onchange="navigateModule(this.value)" class="bg-slate-900 border border-slate-700 text-slate-200 text-xs py-1 px-2 rounded-lg font-bold w-auto cursor-pointer focus:border-[#754E24]">
-        <option value="bottle">瓶形</option>
-        <option value="light">光照</option>
-        <option value="stack" selected>堆棧</option>
+      <!-- 網格功能切換選單 (中英文純淨切換)[cite: 2] -->
+      <select id="moduleSelect" onchange="navigateModule(this.value)" class="bg-slate-900 border border-slate-700 text-slate-200 text-xs py-1 px-2 rounded-lg font-bold w-auto cursor-pointer focus:border-blue-500">
+        <option value="bottle" data-i18n="optBottle">瓶形</option>
+        <option value="light" data-i18n="optLight">光照</option>
+        <option value="stack" selected data-i18n="optStack">堆棧</option>
       </select>
+
+      <!-- 小巧圓角中英切換按鈕 (完全沿用 index 形式與結構)[cite: 2] -->
+      <button onclick="toggleLanguage()" class="text-xs px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition-all font-mono">
+        <span id="langBtnText">EN</span>
+      </button>
     </div>
   </header>
 
-  <!-- 主體三欄 Layout -->
+  <!-- 主體三欄 Layout (維持原版完全不動)[cite: 3] -->
   <main class="flex-1 flex overflow-hidden p-4 gap-5 bg-[#05070a]">
 
-    <!-- 左側邊欄 -->
+    <!-- 左側邊欄[cite: 3] -->
     <aside class="w-16 shrink-0 flex flex-col items-center py-2 gap-5">
       <div class="flex flex-col items-center gap-1.5">
         <span class="text-[10px] text-slate-400 font-medium">Dimension</span>
@@ -217,7 +223,7 @@
 
       <div class="w-8 h-[1px] bg-slate-800/60"></div>
 
-      <!-- VIEW 按鈕群 -->
+      <!-- VIEW 按鈕群[cite: 3] -->
       <div class="flex flex-col gap-2 items-center w-full px-1" id="view-mode-group">
         <button class="view-btn active" onclick="switchTab('opticsTab', this)">2D</button>
         <button class="view-btn" onclick="switchTab('renderTab', this)">3D</button>
@@ -225,13 +231,13 @@
       </div>
     </aside>
 
-    <!-- 中央視圖區 -->
+    <!-- 中央視圖區[cite: 3] -->
     <section class="flex-1 flex flex-col justify-between relative overflow-hidden bg-[#05070a] p-2">
       
-      <!-- 畫布容器 -->
+      <!-- 畫布容器[cite: 3] -->
       <div class="relative flex-1 flex items-center justify-center overflow-hidden" id="canvas-container">
         
-        <!-- Tab 1: 2D 棧板上視排版圖 -->
+        <!-- Tab 1: 2D 棧板上視排版圖[cite: 3] -->
         <div id="opticsTab" class="view-panel flex flex-col items-center justify-center relative">
           <div class="absolute top-2 left-2 z-10">
             <button class="mini-icon-btn" onclick="export2DColorJPG()" title="下載 JPG">
@@ -250,7 +256,7 @@
           <canvas id="simCanvas" style="width: 620px; height: 540px; cursor: grab;"></canvas>
         </div>
 
-        <!-- Tab 2: 3D 堆疊立體圖 -->
+        <!-- Tab 2: 3D 堆疊立體圖[cite: 3] -->
         <div id="renderTab" class="view-panel hidden relative">
           <div class="absolute top-2 left-2 z-10 flex items-center gap-2">
             <button class="mini-icon-btn" onclick="export3DColorJPG()" title="下載 JPG">
@@ -262,7 +268,7 @@
           <div id="webglContainer"></div>
         </div>
 
-        <!-- Tab 3: 手動排列畫布 -->
+        <!-- Tab 3: 手動排列畫布[cite: 3] -->
         <div id="manualTab" class="view-panel hidden flex flex-col items-center justify-center relative">
           <div class="absolute top-2 left-2 z-10 flex items-center gap-2 bg-slate-900/80 px-2.5 py-1 rounded-full border border-slate-800 text-[11px] font-mono text-slate-300">
             <span id="manual-layer-indicator" class="text-blue-400 font-bold">ODD</span>
@@ -283,7 +289,7 @@
 
       </div>
 
-      <!-- 底部左側數據摘要 Bar -->
+      <!-- 底部左側數據摘要 Bar[cite: 3] -->
       <div class="z-10 flex gap-10 text-xs px-0 pb-2">
         <div>
           <div class="text-[11px] text-blue-400 font-semibold">單層箱數 / 總箱數</div>
@@ -301,10 +307,10 @@
 
     </section>
 
-    <!-- 右側控制面板容器 -->
+    <!-- 右側控制面板容器[cite: 3] -->
     <aside id="right-control-panel" class="w-[460px] shrink-0 flex flex-col gap-3 overflow-y-auto custom-scrollbar max-h-[calc(100vh-80px)] pr-2">
       
-      <!-- Card 1: 輸入箱子尺寸規格 -->
+      <!-- Card 1: 輸入箱子尺寸規格[cite: 3] -->
       <div class="v-card geometry-card overflow-hidden shrink-0" id="card-geometry">
         <div class="v-card-header p-4 flex items-center justify-between" onclick="toggleAccordion('card-geometry')">
           <div>
@@ -341,7 +347,7 @@
             </div>
           </div>
 
-          <!-- 自訂層數設定 (手動與自動模式通用) -->
+          <!-- 自訂層數設定 (手動與自動模式通用)[cite: 3] -->
           <div class="pt-2 border-t border-slate-300/80 space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-[11px] font-bold text-slate-800 uppercase tracking-wider">堆疊層數設定</span>
@@ -362,7 +368,7 @@
             </div>
           </div>
 
-          <!-- 半手動覆寫標註文字（可收折展開） -->
+          <!-- 半手動覆寫標註文字（可收折展開）[cite: 3] -->
           <div class="pt-2 border-t border-slate-300/80">
             <div class="flex items-center justify-between cursor-pointer py-1 select-none" onclick="toggleOverrideSection()">
               <span class="text-[11px] font-bold text-slate-800 uppercase tracking-wider">標註顯示設定 (可半手動覆寫)</span>
@@ -402,7 +408,7 @@
         </div>
       </div>
 
-      <!-- Card 2: 計算結果與詳細資訊 -->
+      <!-- Card 2: 計算結果與詳細資訊[cite: 3] -->
       <div class="v-card geometry-card overflow-hidden shrink-0" id="card-result">
         <div class="v-card-header p-4 flex items-center justify-between" onclick="toggleAccordion('card-result')">
           <div>
@@ -419,7 +425,7 @@
         </div>
       </div>
 
-      <!-- Card 3: 手動排列操作面板 -->
+      <!-- Card 3: 手動排列操作面板[cite: 3] -->
       <div class="v-card geometry-card overflow-hidden shrink-0 hidden" id="card-manual">
         <div class="v-card-header p-4 flex items-center justify-between" onclick="toggleAccordion('card-manual')">
           <div>
@@ -489,6 +495,35 @@
   </footer>
 
 <script>
+// 語言狀態管理 (與 index 一致)[cite: 2]
+let currentLang = 'zh';
+
+const i18nDict = {
+  zh: {
+    optBottle: "瓶形",
+    optLight: "光照",
+    optStack: "堆棧"
+  },
+  en: {
+    optBottle: "Bottle",
+    optLight: "Lighting",
+    optStack: "Pallet Stacking"
+  }
+};
+
+function toggleLanguage() {
+  currentLang = currentLang === 'zh' ? 'en' : 'zh';
+  document.getElementById('langBtnText').innerText = currentLang === 'zh' ? 'EN' : '中';
+  
+  const dict = i18nDict[currentLang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key]) {
+      el.innerText = dict[key];
+    }
+  });
+}
+
 const PALLET_L = 120;
 const PALLET_W = 100;
 const MAX_H = 120;
@@ -503,7 +538,7 @@ let scene3D, camera3D, renderer3D, controls3D, is3DInitialized = false;
 let palletGroup3D = null;
 let currentPlan = null;
 
-// 3D 尺寸標註拖曳變數
+// 3D 尺寸標註拖曳變數[cite: 3]
 const draggableSprites = [];
 let draggingSprite = null;
 let dragPlane = new THREE.Plane();
@@ -512,7 +547,7 @@ let dragOffset = new THREE.Vector3();
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-// 手動模式
+// 手動模式[cite: 3]
 let manualEditLayer = 'odd';
 let manualOddBoxes = [];
 let manualEvenBoxes = [];
