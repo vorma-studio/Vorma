@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>寶特瓶瓶肩幾何光學研究模擬器 v17.2 (Diamond Texture & Isometric CAD)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style id="dynamic-theme">
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    :root {
+      --bg-main: #080c14;
+      --card-bg: #111a2e;
+      --card-border: #1e2c45;
+      --btn-bg: #18243b;
+      --btn-border: #2a3c54;
+      --btn-active: #2563eb;
+      --text-main: #f8fafc;
+      --text-sub: #cbd5e1;
+      --canvas-bg: #050811;
+      --accent-color: #60a5fa;
+    }
+    body { background: var(--bg-main); color: var(--text-main); margin: 0; padding: 16px; transition: background 0.3s, color 0.3s; }
+    .glass-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; transition: all 0.3s; }
+    .btn { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--btn-border); background: var(--btn-bg); color: var(--text-sub); font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .btn.active { background: var(--btn-active); color: #ffffff; border-color: var(--accent-color); box-shadow: 0 0 10px rgba(59,130,246,0.35); }
+    .btn:hover:not(.active) { opacity: 0.85; }
+    .tab-btn { padding: 8px 14px; border-bottom: 2px solid transparent; color: var(--text-sub); font-size: 11.5px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .tab-btn.active { border-color: var(--accent-color); color: var(--accent-color); background: rgba(59,130,246,0.08); }
+    input[type=range] { accent-color: var(--accent-color); width: 100%; height: 5px; background: var(--btn-bg); border-radius: 4px; }
+    canvas { background: var(--canvas-bg); border-radius: 8px; border: 1px solid var(--btn-border); display: block; transition: background 0.3s; }
+    .stat-badge { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  </style>
+</head>
+<body>
+
+<div class="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+  <!-- Left Control Panel (5 Cols) -->
+  <div class="lg:col-span-5 flex flex-col gap-4">
+    
+    <!-- Title Banner & Minimal Theme Picker -->
+    <div class="glass-card p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <h1 class="text-lg font-bold" style="color: var(--accent-color);">瓶肩幾何光學模擬器 v17.2</h1>
+        <span class="px-2.5 py-0.5 text-xs rounded-full border" style="background: rgba(59,130,246,0.15); color: var(--accent-color); border-color: var(--btn-border);">Diamond & 3D Isometric CAD</span>
+      </div>
+      <p class="text-xs opacity-80 leading-relaxed">
+        <b>3D 立體 CAD 線條圖視角 (XYZ 45°)</b>：將 3D 鑽石微結構、縱向螺旋線與 Bezier 瓶肩表面以經典 CAD 線條正交投影渲染，即時展現立體結構細節。
+      </p>
+
+      <!-- 無框式 UI 主題選色小條 -->
+      <div class="pt-2 border-t border-black/20 flex items-center justify-between text-xs gap-2">
+        <div class="flex items-center gap-1.5 opacity-70 text-[11px]">
+          <span>🎨 介面主題:</span>
+          <div id="colorPreview" class="w-3.5 h-3.5 rounded-full border border-white/40 shadow-inner" style="background: #080c14;"></div>
+        </div>
+        <div class="flex items-center gap-1.5 flex-1 max-w-[180px]">
+          <input type="text" id="hexInput" value="#080c14" class="w-full text-[11px] rounded px-1.5 py-0.5 stat-badge uppercase" style="background: var(--btn-bg); border: 1px solid var(--btn-border); color: var(--text-main);" oninput="applyCustomHex(this.value)">
+          <input type="color" id="hexPicker" value="#080c14" class="w-5 h-5 rounded border-0 cursor-pointer p-0 bg-transparent flex-shrink-0" oninput="applyCustomHex(this.value)">
+        </div>
+        <div class="flex gap-1">
+          <button class="px-1.5 py-0.5 rounded text-[10px] opacity-80 hover:opacity-100" style="background: var(--btn-bg); border: 1px solid var(--btn-border);" onclick="applyCustomHex('#f2c7d5')">粉紅</button>
+          <button class="px-1.5 py-0.5 rounded text-[10px] opacity-80 hover:opacity-100" style="background: var(--btn-bg); border: 1px solid var(--btn-border);" onclick="applyCustomHex('#080c14')">藍黑</button>
+          <button class="px-1.5 py-0.5 rounded text-[10px] opacity-80 hover:opacity-100" style="background: var(--btn-bg); border: 1px solid var(--btn-border);" onclick="applyCustomHex('#2d121d')">莓紅</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1. 瓶肩幾何輪廓 (Shoulder Geometry) -->
+    <div class="glass-card p-4 space-y-3">
+      <h2 class="text-xs font-semibold uppercase tracking-wider border-b border-black/20 pb-1 flex justify-between" style="color: var(--accent-color);">
+        <span>1. 瓶肩輪廓幾何 (Shoulder CAD Geometry)</span>
+        <span class="text-[10px] opacity-70 font-normal">受控核心變因</span>
+      </h2>
+
+      <div>
+        <div class="flex justify-between text-xs opacity-80 mb-0.5">
+          <span>肩高 (Height):</span>
+          <span id="val-shoulderH" class="stat-badge text-cyan-300">45 mm</span>
+        </div>
+        <input type="range" id="shoulderH" min="20" max="70" value="45" oninput="updateSim()">
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <div class="flex justify-between text-xs opacity-80 mb-0.5">
+            <span>Bezier 曲率 (Curvature):</span>
+            <span id="val-curvature" class="stat-badge">30 (Standard)</span>
+          </div>
+          <input type="range" id="curvature" min="0" max="100" value="30" oninput="updateSim()">
+        </div>
+        <div>
+          <div class="flex justify-between text-xs opacity-80 mb-0.5">
+            <span>轉折位置 (Transition):</span>
+            <span id="val-transPos" class="stat-badge">50% (Centered)</span>
+          </div>
+          <input type="range" id="transPos" min="10" max="90" value="50" oninput="updateSim()">
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 紋理微結構與鑽石紋變量 (Texture & Diamond Mesh) -->
+    <div class="glass-card p-4 space-y-3">
+      <h2 class="text-xs font-semibold uppercase tracking-wider border-b border-black/20 pb-1" style="color: var(--accent-color);">
+        2. 表面微結構紋理 (Micro-Texture & Diamond Mesh)
+      </h2>
+
+      <div>
+        <label class="text-xs opacity-80 block mb-1">紋理類型 (Texture Type)</label>
+        <div class="grid grid-cols-5 gap-1" id="group-texture">
+          <button class="btn" onclick="setParam('texture', 'smooth', this)">平滑</button>
+          <button class="btn active" onclick="setParam('texture', 'vertical', this)">縱向直紋</button>
+          <button class="btn" onclick="setParam('texture', 'sawtooth', this)">鋸齒</button>
+          <button class="btn" onclick="setParam('texture', 'wave', this)">正弦波</button>
+          <button class="btn" onclick="setParam('texture', 'diamond', this)">鑽石紋</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <div class="flex justify-between text-xs opacity-80 mb-0.5">
+            <span>紋理深度 (Depth):</span>
+            <span id="val-texDepth" class="stat-badge text-emerald-300">40%</span>
+          </div>
+          <input type="range" id="texDepth" min="0" max="100" value="40" oninput="updateSim()">
+        </div>
+        <div>
+          <div class="flex justify-between text-xs opacity-80 mb-0.5">
+            <span>紋理密度 (Density):</span>
+            <span id="val-texDensity" class="stat-badge">8 條/週</span>
+          </div>
+          <input type="range" id="texDensity" min="2" max="20" value="8" oninput="updateSim()">
+        </div>
+      </div>
+
+      <!-- 多功能旋轉角 / 鑽石幾何型態拉桿 -->
+      <div class="pt-2 border-t border-black/20" id="box-texTwist">
+        <div class="flex justify-between text-xs opacity-80 mb-0.5">
+          <span class="text-amber-300 font-semibold" id="label-texTwist">🔄 縱向條紋旋轉角 (Rib Twist Angle):</span>
+          <span id="val-texTwist" class="stat-badge text-amber-300">0° (垂直)</span>
+        </div>
+        <input type="range" id="texTwist" min="0" max="60" value="0" step="1" oninput="updateSim()">
+        <span class="text-[10px] opacity-60 mt-0.5 block" id="desc-texTwist">解算 3D 螺旋曲面：當旋轉角增大，剖面切面即時形成斜切波浪邊界並實時引導光線折射。</span>
+      </div>
+    </div>
+
+    <!-- 3. 光源與波長 (Light Source) -->
+    <div class="glass-card p-4 space-y-3">
+      <h2 class="text-xs font-semibold uppercase tracking-wider border-b border-black/20 pb-1" style="color: var(--accent-color);">
+        3. 光源與入射光學 (Lighting & Source)
+      </h2>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs opacity-80 block mb-1">光源類型 (Light Type)</label>
+          <select id="lightType" class="w-full text-xs rounded p-1.5" style="background: var(--btn-bg); border: 1px solid var(--btn-border); color: var(--text-main);" onchange="updateSim()">
+            <option value="shelf" selected>貨架頂光束</option>
+            <option value="parallel">全平行光</option>
+            <option value="point">發散燈泡光</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs opacity-80 block mb-1">入射光波長 ($\lambda$)</label>
+          <select id="wavelength" class="w-full text-xs rounded p-1.5" style="background: var(--btn-bg); border: 1px solid var(--btn-border); color: var(--text-main);" onchange="updateSim()">
+            <option value="365">UV 365 nm (高吸)</option>
+            <option value="385" selected>UV 385 nm (標準)</option>
+            <option value="405">UV 405 nm (近可見)</option>
+            <option value="550">Visible 550 nm (綠光)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <div class="flex justify-between text-xs opacity-80 mb-0.5">
+            <span>入射傾角 (Incident Angle):</span>
+            <span id="val-incidentAngle" class="stat-badge text-amber-300">0° (垂直)</span>
+          </div>
+          <input type="range" id="incidentAngle" min="0" max="60" value="0" step="5" oninput="updateSim()">
+        </div>
+        <div>
+          <div class="flex justify-between text-xs opacity-80 mb-0.5">
+            <span>光源偏心 (Pos X):</span>
+            <span id="val-lightPosX" class="stat-badge">0 px</span>
+          </div>
+          <input type="range" id="lightPosX" min="-150" max="150" value="0" oninput="updateSim()">
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. 內容物飲料與計算品質 (Drink & Quality) -->
+    <div class="glass-card p-4 space-y-3">
+      <h2 class="text-xs font-semibold uppercase tracking-wider border-b border-black/20 pb-1" style="color: var(--accent-color);">
+        4. 內容物與計算精度 (Content & Quality)
+      </h2>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs opacity-80 block mb-1">內容物種類 (Drink Type)</label>
+          <select id="drinkType" class="w-full text-xs rounded p-1.5" style="background: var(--btn-bg); border: 1px solid var(--btn-border); color: var(--text-main);" onchange="updateSim()">
+            <option value="juice" selected>濃縮果汁 ($n=1.35$)</option>
+            <option value="water">純淨水 ($n=1.33$)</option>
+            <option value="tea">茶飲料 ($n=1.34$)</option>
+            <option value="milk">乳飲料 ($n=1.36$)</option>
+            <option value="custom">自訂 Custom...</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs opacity-80 block mb-1">採樣精度 (Ray Quality)</label>
+          <select id="qualityPreset" class="w-full text-xs rounded p-1.5" style="background: var(--btn-bg); border: 1px solid var(--btn-border); color: var(--text-main);" onchange="updateSim()">
+            <option value="fast">Fast (200 光線)</option>
+            <option value="balanced" selected>Balanced (500 光線)</option>
+            <option value="accurate">Accurate (1500 光線)</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="customDrinkBox" class="grid grid-cols-2 gap-3 pt-2 border-t border-black/20 hidden">
+        <div>
+          <div class="flex justify-between text-xs text-purple-300 mb-0.5">
+            <span>折射率 ($n_{drink}$):</span>
+            <span id="val-customN" class="stat-badge">1.35</span>
+          </div>
+          <input type="range" id="customN" min="1.30" max="1.45" step="0.01" value="1.35" oninput="updateSim()">
+        </div>
+        <div>
+          <div class="flex justify-between text-xs text-purple-300 mb-0.5">
+            <span>吸收率 ($\alpha_{385}$):</span>
+            <span id="val-customAlpha" class="stat-badge">0.10</span>
+          </div>
+          <input type="range" id="customAlpha" min="0.001" max="0.50" step="0.01" value="0.10" oninput="updateSim()">
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Right Viewport Studio (7 Cols) -->
+  <div class="lg:col-span-7 flex flex-col gap-4">
+    
+    <!-- Viewport Header Tabs -->
+    <div class="glass-card p-2 flex items-center justify-between border-b border-black/20 overflow-x-auto">
+      <div class="flex gap-1" id="viewport-tabs">
+        <button class="tab-btn active" onclick="switchTab('opticsTab', this)">🔬 2D 物理光線追蹤 (Ray Tracing)</button>
+        <button class="tab-btn" onclick="switchTab('cadTab', this)">📐 CAD 三視圖 Studio (Front/Top/Section)</button>
+        <button class="tab-btn" onclick="switchTab('isoTab', this)">🧊 3D 立體 CAD (Isometric View)</button>
+      </div>
+
+      <span class="text-xs opacity-70 pr-3 hidden xl:inline">30cm 貨架實尺場景</span>
+    </div>
+
+    <!-- Main Viewport Canvas Display -->
+    <div class="glass-card p-3 flex flex-col items-center justify-center relative min-h-[540px]">
+      
+      <div id="opticsTab" class="w-full flex justify-center">
+        <canvas id="simCanvas" width="620" height="540"></canvas>
+      </div>
+
+      <div id="cadTab" class="w-full justify-center hidden">
+        <canvas id="cadCanvas" width="620" height="540"></canvas>
+      </div>
+
+      <div id="isoTab" class="w-full justify-center hidden">
+        <canvas id="isoCanvas" width="620" height="540"></canvas>
+      </div>
+
+    </div>
+
+    <!-- Optical KPI Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="glass-card p-3 text-center border-amber-500/30 bg-amber-950/20">
+        <div class="text-xs text-amber-300 font-semibold">內容物接收 UV 劑量</div>
+        <div id="stat-juiceDose" class="text-xl font-bold text-amber-400 mt-0.5">-</div>
+        <div class="text-[10px] opacity-60 mt-0.5">越高代表受照損害越強</div>
+      </div>
+      <div class="glass-card p-3 text-center border-blue-500/30 bg-blue-950/20">
+        <div class="text-xs text-blue-300 font-semibold">0-60° 掃描平均劑量</div>
+        <div id="stat-juiceDoseAvg" class="text-xl font-bold text-blue-400 mt-0.5">-</div>
+        <div class="text-[10px] opacity-60 mt-0.5">全角度綜合受照率</div>
+      </div>
+      <div class="glass-card p-3 text-center border-emerald-500/30 bg-emerald-950/20">
+        <div class="text-xs text-emerald-300 font-semibold">遮光防護效率</div>
+        <div id="stat-protection" class="text-xl font-bold text-emerald-400 mt-0.5">-</div>
+        <div class="text-[10px] opacity-60 mt-0.5">100% − 平均劑量</div>
+      </div>
+      <div class="glass-card p-3 text-center border-purple-500/30 bg-purple-950/20">
+        <div class="text-xs text-purple-300 font-semibold">PET 反射 + 吸收</div>
+        <div id="stat-petLoss" class="text-xl font-bold text-purple-400 mt-0.5">-</div>
+        <div class="text-[10px] opacity-60 mt-0.5">瓶身直接阻擋比例</div>
+      </div>
+    </div>
+
+    <!-- System Auto-Derived Parameters -->
+    <div class="glass-card p-3 space-y-2 text-xs opacity-90">
+      <div class="flex justify-between items-center border-b border-black/20 pb-1 font-bold" style="color: var(--accent-color);">
+        <span>⚙️ 系統內部推導參數 (Diamond Mesh Solved)</span>
+        <span class="text-[10px] opacity-60 font-normal">由 11+1 項使用者變量自動運算</span>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center pt-1">
+        <div class="p-2 rounded border border-black/20" style="background: var(--btn-bg);">
+          <div class="text-[10px] opacity-70">推導刻面角 ($\theta_{facet}$)</div>
+          <div id="der-facetAngle" class="text-sm font-bold text-emerald-300 mt-0.5">-°</div>
+        </div>
+        <div class="p-2 rounded border border-black/20" style="background: var(--btn-bg);">
+          <div class="text-[10px] opacity-70">實體深度 ($Depth$)</div>
+          <div id="der-depthMM" class="text-sm font-bold text-cyan-300 mt-0.5">- mm</div>
+        </div>
+        <div class="p-2 rounded border border-black/20" style="background: var(--btn-bg);">
+          <div class="text-[10px] opacity-70">吹塑壁厚 ($t_{wall}$)</div>
+          <div id="der-wallMM" class="text-sm font-bold text-amber-300 mt-0.5">- mm</div>
+        </div>
+        <div class="p-2 rounded border border-black/20" style="background: var(--btn-bg);">
+          <div class="text-[10px] opacity-70"> Monte Carlo 光線數</div>
+          <div id="der-rayCount" class="text-sm font-bold text-purple-300 mt-0.5">- 條</div>
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center text-[11px] opacity-70 pt-1 border-t border-black/20">
+        <span>瓶肩表面積：<b id="der-surfArea" class="text-cyan-300 stat-badge">- cm²</b></span>
+        <span>平均斜率：<b id="der-avgSlope" class="stat-badge">-°</b></span>
+        <span>TIR 臨界角門檻：<b id="der-tirStatus" class="text-emerald-400 stat-badge">58.1°</b></span>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const PX_PER_MM = 1.8;
+let currentTab = 'opticsTab';
+
+// Dynamic Theme Engine
+function hexToRgb(hex) {
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  const num = parseInt(hex, 16);
+  return isNaN(num) ? null : { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+}
+
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b].map(x => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, '0')).join('');
+}
+
+function adjustColor(rgb, factor) {
+  return {
+    r: Math.round(rgb.r * factor),
+    g: Math.round(rgb.g * factor),
+    b: Math.round(rgb.b * factor)
+  };
+}
+
+function applyCustomHex(hexVal) {
+  const rgb = hexToRgb(hexVal);
+  if (!rgb) return;
+
+  const hexClean = rgbToHex(rgb.r, rgb.g, rgb.b);
+  document.getElementById('hexInput').value = hexClean;
+  document.getElementById('hexPicker').value = hexClean;
+  document.getElementById('colorPreview').style.background = hexClean;
+
+  const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+  let bgMain, cardBg, cardBorder, btnBg, btnBorder, btnActive, textMain, textSub, canvasBg, accent;
+
+  if (luminance > 0.65) {
+    bgMain = hexClean;
+    cardBg = rgbToHex(adjustColor(rgb, 0.5).r, adjustColor(rgb, 0.5).g, adjustColor(rgb, 0.5).b);
+    cardBorder = rgbToHex(adjustColor(rgb, 0.7).r, adjustColor(rgb, 0.7).g, adjustColor(rgb, 0.7).b);
+    btnBg = rgbToHex(adjustColor(rgb, 0.6).r, adjustColor(rgb, 0.6).g, adjustColor(rgb, 0.6).b);
+    btnBorder = rgbToHex(adjustColor(rgb, 0.8).r, adjustColor(rgb, 0.8).g, adjustColor(rgb, 0.8).b);
+    btnActive = rgbToHex(adjustColor(rgb, 0.35).r, adjustColor(rgb, 0.35).g, adjustColor(rgb, 0.35).b);
+    textMain = '#ffffff';
+    textSub = '#fde047';
+    canvasBg = rgbToHex(adjustColor(rgb, 0.25).r, adjustColor(rgb, 0.25).g, adjustColor(rgb, 0.25).b);
+    accent = '#ffffff';
+  } else {
+    bgMain = hexClean;
+    cardBg = rgbToHex(adjustColor(rgb, 1.4).r, adjustColor(rgb, 1.4).g, adjustColor(rgb, 1.4).b);
+    cardBorder = rgbToHex(adjustColor(rgb, 2.1).r, adjustColor(rgb, 2.1).g, adjustColor(rgb, 2.1).b);
+    btnBg = rgbToHex(adjustColor(rgb, 1.7).r, adjustColor(rgb, 1.7).g, adjustColor(rgb, 1.7).b);
+    btnBorder = rgbToHex(adjustColor(rgb, 2.4).r, adjustColor(rgb, 2.4).g, adjustColor(rgb, 2.4).b);
+    btnActive = rgbToHex(adjustColor(rgb, 3.2).r, adjustColor(rgb, 3.2).g, adjustColor(rgb, 3.2).b);
+    textMain = '#f8fafc';
+    textSub = '#cbd5e1';
+    canvasBg = rgbToHex(adjustColor(rgb, 0.7).r, adjustColor(rgb, 0.7).g, adjustColor(rgb, 0.7).b);
+    accent = rgbToHex(Math.min(255, rgb.r + 100), Math.min(255, rgb.g + 100), Math.min(255, rgb.b + 100));
+  }
+
+  const root = document.documentElement;
+  root.style.setProperty('--bg-main', bgMain);
+  root.style.setProperty('--card-bg', cardBg);
+  root.style.setProperty('--card-border', cardBorder);
+  root.style.setProperty('--btn-bg', btnBg);
+  root.style.setProperty('--btn-border', btnBorder);
+  root.style.setProperty('--btn-active', btnActive);
+  root.style.setProperty('--text-main', textMain);
+  root.style.setProperty('--text-sub', textSub);
+  root.style.setProperty('--canvas-bg', canvasBg);
+  root.style.setProperty('--accent-color', accent);
+}
+
+class Material {
+  constructor(name, n, alphas) {
+    this.name = name;
+    this.n = n;
+    this.alphas = alphas;
+  }
+  getAlpha(wl) {
+    return this.alphas[wl] !== undefined ? this.alphas[wl] : 0.001;
+  }
+}
+
+const MAT_AIR = new Material('Air', 1.0, { 365: 0, 385: 0, 405: 0, 550: 0 });
+const MAT_PET = new Material('PET', 1.59, { 365: 0.035, 385: 0.010, 405: 0.003, 550: 0.0005 });
+const MAT_JUICE = new Material('濃縮果汁', 1.35, { 365: 0.22, 385: 0.10, 405: 0.035, 550: 0.004 });
+const MAT_WATER = new Material('純淨水', 1.33, { 365: 0.005, 385: 0.002, 405: 0.001, 550: 0.0001 });
+const MAT_TEA = new Material('茶飲料', 1.34, { 365: 0.15, 385: 0.06, 405: 0.02, 550: 0.002 });
+const MAT_MILK = new Material('乳飲料', 1.36, { 365: 0.35, 385: 0.18, 405: 0.08, 550: 0.01 });
+
+let state = {
+  shoulderHeightMM: 45,
+  curvature: 30,
+  transPos: 50,
+  texture: 'vertical',
+  texDepth: 40,
+  texDensity: 8,
+  texTwist: 0,
+  lightType: 'shelf',
+  wavelength: 385,
+  incidentAngle: 0,
+  lightPosX: 0,
+  drinkType: 'juice',
+  qualityPreset: 'balanced',
+  customN: 1.35,
+  customAlpha: 0.10,
+
+  bottleHeightMM: 225,
+  bodyDiamMM: 65,
+  neckDiamMM: 28
+};
+
+function setParam(key, val, el) {
+  state[key] = val;
+  const parent = el.parentElement;
+  parent.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  updateSim();
+}
+
+function switchTab(tabId, el) {
+  currentTab = tabId;
+  document.querySelectorAll('#viewport-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+
+  document.getElementById('opticsTab').classList.add('hidden');
+  document.getElementById('cadTab').classList.add('hidden');
+  document.getElementById('isoTab').classList.add('hidden');
+
+  document.getElementById(tabId).classList.remove('hidden');
+  renderAllViews();
+}
+
+function getActiveDrinkMaterial() {
+  if (state.drinkType === 'water') return MAT_WATER;
+  if (state.drinkType === 'tea') return MAT_TEA;
+  if (state.drinkType === 'milk') return MAT_MILK;
+  if (state.drinkType === 'custom') {
+    return new Material('自訂', state.customN, {
+      365: state.customAlpha * 2.0,
+      385: state.customAlpha,
+      405: state.customAlpha * 0.35,
+      550: state.customAlpha * 0.04
+    });
+  }
+  return MAT_JUICE;
+}
+
+function getRayCountFromPreset() {
+  if (state.qualityPreset === 'fast') return 200;
+  if (state.qualityPreset === 'accurate') return 1500;
+  return 500;
+}
+
+function cubicBezier(p0, p1, p2, p3, t) {
+  const mt = 1 - t;
+  const mt2 = mt * mt, mt3 = mt2 * mt;
+  const t2 = t * t, t3 = t2 * t;
+  return {
+    x: mt3 * p0.x + 3 * mt2 * t * p1.x + 3 * mt * t2 * p2.x + t3 * p3.x,
+    y: mt3 * p0.y + 3 * mt2 * t * p1.y + 3 * mt * t2 * p2.y + t3 * p3.y
+  };
+}
+
+function triWave(x) { return 2 * Math.abs(2 * (x - Math.floor(x + 0.5))) - 1; }
+
+function raySegIntersect(p, d, a, b) {
+  const v1 = [p[0] - a[0], p[1] - a[1]], v2 = [b[0] - a[0], b[1] - a[1]], v3 = [-d[1], d[0]];
+  const denom = v2[0] * v3[0] + v2[1] * v3[1];
+  if (Math.abs(denom) < 1e-12) return null;
+  const t = (v2[0] * v1[1] - v2[1] * v1[0]) / denom;
+  const s = (v1[0] * v3[0] + v1[1] * v3[1]) / denom;
+  if (t > 1e-5 && s >= 0 && s <= 1) return t;
+  return null;
+}
+
+function fresnelR(n1, n2, cosi) {
+  const eta = n1 / n2, k = 1 - eta * eta * (1 - cosi * cosi);
+  if (k < 0) return { R: 1.0, tir: true };
+  const cost = Math.sqrt(k);
+  const Rs = Math.pow((n1 * cosi - n2 * cost) / (n1 * cosi + n2 * cost), 2);
+  const Rp = Math.pow((n1 * cost - n2 * cosi) / (n1 * cost + n2 * cosi), 2);
+  return { R: (Rs + Rp) / 2, tir: false };
+}
+
+function updateSim() {
+  state.shoulderHeightMM = parseFloat(document.getElementById('shoulderH').value);
+  state.curvature = parseFloat(document.getElementById('curvature').value);
+  state.transPos = parseFloat(document.getElementById('transPos').value);
+
+  state.texDepth = parseFloat(document.getElementById('texDepth').value);
+  state.texDensity = parseInt(document.getElementById('texDensity').value);
+  state.texTwist = parseFloat(document.getElementById('texTwist').value);
+
+  state.lightType = document.getElementById('lightType').value;
+  state.wavelength = parseInt(document.getElementById('wavelength').value);
+  state.incidentAngle = parseFloat(document.getElementById('incidentAngle').value);
+  state.lightPosX = parseFloat(document.getElementById('lightPosX').value);
+
+  state.drinkType = document.getElementById('drinkType').value;
+  state.qualityPreset = document.getElementById('qualityPreset').value;
+
+  if (state.drinkType === 'custom') {
+    document.getElementById('customDrinkBox').classList.remove('hidden');
+    state.customN = parseFloat(document.getElementById('customN').value);
+    state.customAlpha = parseFloat(document.getElementById('customAlpha').value);
+    document.getElementById('val-customN').innerText = state.customN.toFixed(2);
+    document.getElementById('val-customAlpha').innerText = state.customAlpha.toFixed(2);
+  } else {
+    document.getElementById('customDrinkBox').classList.add('hidden');
+  }
+
+  document.getElementById('val-shoulderH').innerText = state.shoulderHeightMM + ' mm';
+  document.getElementById('val-curvature').innerText = state.curvature + (state.curvature === 0 ? ' (Linear)' : (state.curvature === 30 ? ' (Std)' : ''));
+  document.getElementById('val-transPos').innerText = state.transPos + '%';
+
+  document.getElementById('val-texDepth').innerText = state.texDepth + '%';
+  document.getElementById('val-texDensity').innerText = state.texDensity + ' 條/週';
+
+  // 多功能拉桿 UI 狀態更新
+  const labelEl = document.getElementById('label-texTwist');
+  const valEl = document.getElementById('val-texTwist');
+  const descEl = document.getElementById('desc-texTwist');
+  const boxEl = document.getElementById('box-texTwist');
+  const inputEl = document.getElementById('texTwist');
+
+  if (state.texture === 'vertical') {
+    if (boxEl) boxEl.classList.remove('opacity-40', 'pointer-events-none');
+    if (inputEl) inputEl.disabled = false;
+    if (labelEl) labelEl.innerHTML = '🔄 縱向條紋旋轉角 (Rib Twist Angle):';
+    if (valEl) valEl.innerText = state.texTwist + '° ' + (state.texTwist === 0 ? '(垂直)' : '(螺旋)');
+    if (descEl) descEl.innerText = '解算 3D 螺旋曲面：當旋轉角增大，剖面切面即時形成斜切波浪邊界並實時引導光線折射。';
+  } else if (state.texture === 'diamond') {
+    if (boxEl) boxEl.classList.remove('opacity-40', 'pointer-events-none');
+    if (inputEl) inputEl.disabled = false;
+    if (labelEl) labelEl.innerHTML = '💎 鑽石幾何型態 (Diamond Grid Angle):';
+    const shapeType = state.texTwist < 25 ? '(寬菱/倒三角)' : (state.texTwist > 45 ? '(瘦高菱格)' : '(標準菱格)');
+    if (valEl) valEl.innerText = state.texTwist + '° ' + shapeType;
+    if (descEl) descEl.innerText = '調整雙向對角網格傾角：控制鑽石紋從倒三角/寬菱形漸變至瘦高菱形，連動 3D 與切面光路。';
+  } else {
+    if (boxEl) boxEl.classList.add('opacity-40', 'pointer-events-none');
+    if (inputEl) inputEl.disabled = true;
+    if (labelEl) labelEl.innerHTML = '⚪ 條紋/網格旋轉角 (Twist / Aspect Angle):';
+    if (valEl) valEl.innerText = '不適用 (N/A)';
+    if (descEl) descEl.innerText = '當前紋理模式不支援旋轉角/菱格型態調整。';
+  }
+
+  document.getElementById('val-incidentAngle').innerText = state.incidentAngle + '°';
+  document.getElementById('val-lightPosX').innerText = state.lightPosX + ' px';
+
+  renderAllViews();
+}
+
+/**
+ * 核心幾何運算：解算 3D 螺旋/鑽石曲面 (3D Helical & Diamond Surface) 與 Z=0 縱切面交點
+ */
+function buildBottleGeometry(cx, topY, neckW, bodyW, bottomY) {
+  const shoulderH = state.shoulderHeightMM * PX_PER_MM;
+  const samples = 200;
+
+  const tTrans = state.transPos / 100.0;
+  const curvFactor = state.curvature / 100.0;
+
+  let P0 = { x: neckW, y: topY };
+  let P3 = { x: bodyW, y: topY + shoulderH };
+
+  let P1 = {
+    x: neckW + (bodyW - neckW) * curvFactor * (1 - tTrans),
+    y: topY + shoulderH * tTrans * 0.6
+  };
+  let P2 = {
+    x: bodyW - (bodyW - neckW) * (1 - curvFactor) * tTrans,
+    y: topY + shoulderH * (tTrans + (1 - tTrans) * 0.5)
+  };
+
+  const rawOuter = [];
+  for (let i = 0; i <= samples; i++) {
+    const t = i / samples;
+    const pt = cubicBezier(P0, P1, P2, P3, t);
+    pt.x = Math.min(bodyW, Math.max(neckW, pt.x));
+    rawOuter.push(pt);
+  }
+
+  let arcLenPx = 0, surfAreaMM2 = 0, sumSlope = 0;
+  for (let i = 1; i < rawOuter.length; i++) {
+    const pA = rawOuter[i - 1], pB = rawOuter[i];
+    const dsPx = Math.hypot(pB.x - pA.x, pB.y - pA.y);
+    arcLenPx += dsPx;
+
+    const rAvgMM = ((pA.x + pB.x) / 2) / PX_PER_MM;
+    surfAreaMM2 += 2 * Math.PI * rAvgMM * (dsPx / PX_PER_MM);
+
+    const dy = Math.abs(pB.y - pA.y), dx = Math.abs(pB.x - pA.x);
+    sumSlope += Math.atan2(dx, dy) * 180 / Math.PI;
+  }
+
+  const avgSlopeDeg = sumSlope / (rawOuter.length - 1);
+  const arcLenMM = arcLenPx / PX_PER_MM;
+
+  const texDepthMM = (state.texDepth / 100.0) * 1.5;
+  let ampPx = texDepthMM * PX_PER_MM;
+
+  // 計算 3D 螺旋與鑽石特徵與切面相交之解算參數
+  const twistRadTotal = (state.texTwist * Math.PI) / 180;
+  const numRibs = Math.max(1, state.texDensity);
+
+  // 鋸齒/正弦波/鑽石紋沿弧長方向的半週期（像素）
+  const halfPeriodPx = arcLenPx / (2 * Math.max(1, state.texDensity));
+  let effAmpPx = ampPx;
+  if (state.texture === 'sawtooth' || state.texture === 'wave' || state.texture === 'diamond') {
+    effAmpPx = Math.min(ampPx, halfPeriodPx * 0.9);
+  }
+
+  // 推導刻面角：直接用「該紋理實際使用的振幅與極值微分公式」對弧長求最大斜率
+  let derivedFacetDeg = 0;
+  if (state.texture === 'sawtooth') {
+    const k = halfPeriodPx / 2;
+    derivedFacetDeg = k > 0 ? Math.atan(effAmpPx / k) * 180 / Math.PI : 0;
+  } else if (state.texture === 'wave') {
+    const k = halfPeriodPx / Math.PI;
+    derivedFacetDeg = k > 0 ? Math.atan(effAmpPx / k) * 180 / Math.PI : 0;
+  } else if (state.texture === 'diamond') {
+    const aspectMult = 1 + (state.texTwist - 30) / 60;
+    const k = (halfPeriodPx / 2) / Math.max(0.2, aspectMult);
+    derivedFacetDeg = k > 0 ? Math.atan(effAmpPx / k) * 180 / Math.PI : 0;
+  } else if (state.texture === 'vertical') {
+    const maxSlope = arcLenPx > 0 ? (effAmpPx * numRibs * twistRadTotal) / arcLenPx : 0;
+    derivedFacetDeg = Math.atan(maxSlope) * 180 / Math.PI;
+  }
+
+  const rightOuterPoints = [];
+  for (let i = 0; i < rawOuter.length; i++) {
+    const t = i / samples;
+    const P = rawOuter[i];
+    let texOffset = 0;
+
+    if (state.texture !== 'smooth') {
+      if (state.texture === 'sawtooth') {
+        texOffset = effAmpPx * triWave(t * state.texDensity);
+      } else if (state.texture === 'wave') {
+        texOffset = effAmpPx * Math.sin(t * Math.PI * state.texDensity * 2);
+      } else if (state.texture === 'diamond') {
+        // 鑽石紋縱向剖面：受拉桿控制從倒三角/寬菱形漸變至瘦高菱形
+        const aspectMult = 1 + (state.texTwist - 30) / 60;
+        texOffset = effAmpPx * triWave(t * state.texDensity * 2 * Math.max(0.2, aspectMult));
+      } else if (state.texture === 'vertical') {
+        const phi = t * twistRadTotal;
+        texOffset = effAmpPx * Math.cos(numRibs * phi);
+      }
+    }
+
+    const P_prev = rawOuter[Math.max(0, i - 1)];
+    const P_next = rawOuter[Math.min(rawOuter.length - 1, i + 1)];
+    let tx = P_next.x - P_prev.x, ty = P_next.y - P_prev.y;
+    const tl = Math.hypot(tx, ty) || 1;
+    tx /= tl; ty /= tl;
+    let nx = -ty, ny = tx;
+    if (nx < 0) { nx = -nx; ny = -ny; }
+
+    rightOuterPoints.push({
+      x: Math.min(cx + bodyW, cx + P.x + nx * texOffset),
+      y: P.y + ny * texOffset
+    });
+  }
+  rightOuterPoints.push({ x: cx + bodyW, y: bottomY });
+
+  const rightInnerPoints = [];
+  for (let i = 0; i < rawOuter.length; i++) {
+    const P = rawOuter[i];
+    const t = i / samples;
+    const P_prev = rawOuter[Math.max(0, i - 1)];
+    const P_next = rawOuter[Math.min(rawOuter.length - 1, i + 1)];
+    let tx = P_next.x - P_prev.x, ty = P_next.y - P_prev.y;
+    const tl = Math.hypot(tx, ty) || 1;
+    tx /= tl; ty /= tl;
+    let nx = -ty, ny = tx;
+    if (nx > 0) { nx = -nx; ny = -ny; }
+
+    const wallMM = 0.40 - 0.12 * t;
+    const wallPx = wallMM * PX_PER_MM;
+
+    let candX = cx + P.x + nx * (wallPx + (state.texture !== 'smooth' ? effAmpPx * 0.3 : 0));
+    let candY = P.y + ny * wallPx;
+    candX = Math.max(cx + 2, candX);
+    rightInnerPoints.push([candX, candY]);
+  }
+
+  const rightOuterXY = rightOuterPoints.map(p => [p.x, p.y]);
+  const leftOuterXY = rightOuterXY.map(p => [cx - (p[0] - cx), p[1]]).reverse();
+  const leftInnerXY = rightInnerPoints.map(p => [cx - (p[0] - cx), p[1]]).reverse();
+
+  const outerPoly = [[cx - neckW, topY], [cx + neckW, topY]]
+    .concat(rightOuterXY).concat(leftOuterXY).concat([[cx - neckW, topY]]);
+
+  const wallPxTop = 0.35 * PX_PER_MM;
+  const innerTopL = [cx - neckW + wallPxTop, topY];
+  const innerTopR = [cx + neckW - wallPxTop, topY];
+  const innerPoly = [innerTopL, innerTopR]
+    .concat(rightInnerPoints)
+    .concat([[cx + bodyW - wallPxTop, bottomY], [cx - bodyW + wallPxTop, bottomY]])
+    .concat(leftInnerXY).concat([innerTopL]);
+
+  const fillY = topY; // 滿杯水位
+
+  return {
+    outerPoly, innerPoly, fillY, shoulderH, rawOuter, twistRadTotal,
+    derivedFacetDeg, texDepthMM,
+    analysis: {
+      arcLenMM, surfAreaCM2: surfAreaMM2 / 100.0, avgSlopeDeg
+    }
+  };
+}
+
+/**
+ * 實時幾何光線追蹤引擎：基於正確的剖面交線邊界聚焦點進算 Snell's / Fresnel 反折射
+ */
+function traceRayV17(p0, d0, polygons, fillY, derivedFacetDeg) {
+  let p = [p0[0], p0[1]], d = [d0[0], d0[1]];
+  const norm = Math.hypot(d[0], d[1]) || 1; d = [d[0] / norm, d[1] / norm];
+
+  const path = [[p[0], p[1]]];
+  let currentEnergy = 1.0;
+  let reflectedEnergy = 0.0;
+  let absorbedPET = 0.0;
+  let juiceDose = 0.0;
+
+  const drinkMat = getActiveDrinkMaterial();
+  const outerPoly = polygons[0].poly;
+  const innerPoly = polygons[1].poly;
+
+  const getEdges = (poly) => {
+    const list = [];
+    for (let i = 0; i < poly.length - 1; i++) list.push({ a: poly[i], b: poly[i + 1] });
+    return list;
+  };
+
+  const outerEdges = getEdges(outerPoly);
+  const innerEdges = getEdges(innerPoly);
+
+  // 第一撞擊點：外壁 Air -> PET
+  let bestT1 = null, bestEdge1 = null;
+  for (const e of outerEdges) {
+    const t = raySegIntersect(p, d, e.a, e.b);
+    if (t !== null && (bestT1 === null || t < bestT1)) {
+      bestT1 = t; bestEdge1 = e;
+    }
+  }
+
+  if (bestT1 === null) {
+    path.push([p[0] + d[0] * 600, p[1] + d[1] * 600]);
+    return { path, juiceDose: 0, reflectedEnergy: 0, absorbedPET: 0, hit: false };
+  }
+
+  const hit1 = [p[0] + d[0] * bestT1, p[1] + d[1] * bestT1];
+  path.push(hit1);
+
+  // 由真正的 3D 相交多邊形精確算得切面法線
+  const ed1 = [bestEdge1.b[0] - bestEdge1.a[0], bestEdge1.b[1] - bestEdge1.a[1]];
+  let nrm1 = [-ed1[1], ed1[0]];
+  const nl1 = Math.hypot(nrm1[0], nrm1[1]) || 1;
+  nrm1 = [nrm1[0] / nl1, nrm1[1] / nl1];
+
+  let cosi1 = -(d[0] * nrm1[0] + d[1] * nrm1[1]);
+  if (cosi1 < 0) { nrm1 = [-nrm1[0], -nrm1[1]]; cosi1 = -(d[0] * nrm1[0] + d[1] * nrm1[1]); }
+  cosi1 = Math.max(0.02, Math.min(1, cosi1));
+
+  const { R: R1, tir: tir1 } = fresnelR(MAT_AIR.n, MAT_PET.n, cosi1);
+  reflectedEnergy += currentEnergy * R1;
+  currentEnergy *= (1 - R1);
+
+  if (tir1) {
+    path.push([hit1[0] + d[0] * 100, hit1[1] - d[1] * 100]);
+    return { path, juiceDose: 0, reflectedEnergy: 1.0, absorbedPET: 0, hit: true };
+  }
+
+  // PET 內部折射向量
+  const eta1 = MAT_AIR.n / MAT_PET.n;
+  const k1 = 1 - eta1 * eta1 * (1 - cosi1 * cosi1);
+  const cost1 = Math.sqrt(Math.max(k1, 0));
+  let dPET = [eta1 * d[0] + (eta1 * cosi1 - cost1) * nrm1[0], eta1 * d[1] + (eta1 * cosi1 - cost1) * nrm1[1]];
+  const dnPET = Math.hypot(dPET[0], dPET[1]) || 1;
+  dPET = [dPET[0] / dnPET, dPET[1] / dnPET];
+
+  // 第二撞擊點：內壁 PET -> Juice/Air
+  let bestT2 = null, bestEdge2 = null;
+  for (const e of innerEdges) {
+    const t = raySegIntersect(hit1, dPET, e.a, e.b);
+    if (t !== null && (bestT2 === null || t < bestT2)) {
+      bestT2 = t; bestEdge2 = e;
+    }
+  }
+
+  if (bestT2 === null) {
+    path.push([hit1[0] + dPET[0] * 300, hit1[1] + dPET[1] * 300]);
+    return { path, juiceDose: 0, reflectedEnergy, absorbedPET: 0, hit: false };
+  }
+
+  const hit2 = [hit1[0] + dPET[0] * bestT2, hit1[1] + dPET[1] * bestT2];
+  path.push(hit2);
+
+  // 計算 Beer-Lambert 在 PET 內的幾何厚度吸收
+  const L_pet = bestT2 / PX_PER_MM;
+  const alphaPET = MAT_PET.getAlpha(state.wavelength);
+  const petAtt = Math.exp(-alphaPET * L_pet);
+  absorbedPET = currentEnergy * (1 - petAtt);
+  currentEnergy *= petAtt;
+
+  const isJuiceTarget = hit2[1] >= fillY;
+  const targetMedium = isJuiceTarget ? drinkMat : MAT_AIR;
+
+  const ed2 = [bestEdge2.b[0] - bestEdge2.a[0], bestEdge2.b[1] - bestEdge2.a[1]];
+  let nrm2 = [-ed2[1], ed2[0]];
+  const nl2 = Math.hypot(nrm2[0], nrm2[1]) || 1;
+  nrm2 = [nrm2[0] / nl2, nrm2[1] / nl2];
+
+  let cosi2 = -(dPET[0] * nrm2[0] + dPET[1] * nrm2[1]);
+  if (cosi2 < 0) { nrm2 = [-nrm2[0], -nrm2[1]]; cosi2 = -(dPET[0] * nrm2[0] + dPET[1] * nrm2[1]); }
+  cosi2 = Math.max(0.02, Math.min(1, cosi2));
+
+  const { R: R2, tir: tir2 } = fresnelR(MAT_PET.n, targetMedium.n, cosi2);
+
+  if (tir2) {
+    const refDPET = [dPET[0] + 2 * cosi2 * nrm2[0], dPET[1] + 2 * cosi2 * nrm2[1]];
+    path.push([hit2[0] + refDPET[0] * 120, hit2[1] + refDPET[1] * 120]);
+    return { path, juiceDose: 0, reflectedEnergy, absorbedPET, hit: true };
+  }
+
+  const entryEnergy = currentEnergy * (1 - R2);
+
+  const eta2 = MAT_PET.n / targetMedium.n;
+  const k2 = 1 - eta2 * eta2 * (1 - cosi2 * cosi2);
+  const cost2 = Math.sqrt(Math.max(k2, 0));
+  let dTarget = [eta2 * dPET[0] + (eta2 * cosi2 - cost2) * nrm2[0], eta2 * dPET[1] + (eta2 * cosi2 - cost2) * nrm2[1]];
+  const dnTarget = Math.hypot(dTarget[0], dTarget[1]) || 1;
+  dTarget = [dTarget[0] / dnTarget, dTarget[1] / dnTarget];
+
+  if (isJuiceTarget) {
+    juiceDose = entryEnergy;
+    path.push([hit2[0] + dTarget[0] * 150, hit2[1] + dTarget[1] * 150]);
+  } else {
+    if (dTarget[1] > 0) {
+      const tLiquid = (fillY - hit2[1]) / dTarget[1];
+      if (tLiquid > 0 && tLiquid < 400) {
+        path.push([hit2[0] + dTarget[0] * tLiquid, fillY]);
+        juiceDose = entryEnergy;
+      } else {
+        path.push([hit2[0] + dTarget[0] * 200, hit2[1] + dTarget[1] * 200]);
+      }
+    } else {
+      path.push([hit2[0] + dTarget[0] * 200, hit2[1] + dTarget[1] * 200]);
+    }
+  }
+
+  return { path, juiceDose, reflectedEnergy, absorbedPET, hit: true };
+}
+
+function renderOpticalSim(geo) {
+  const canvas = document.getElementById('simCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const cx = canvas.width / 2;
+  const bottomY = 500;
+  const shelfTopY = 35;
+  const topY = bottomY - state.bottleHeightMM * PX_PER_MM;
+  const bodyW = (state.bodyDiamMM / 2) * PX_PER_MM;
+  const neckW = (state.neckDiamMM / 2) * PX_PER_MM;
+
+  const polygons = [
+    { poly: geo.outerPoly, mat: MAT_PET },
+    { poly: geo.innerPoly, mat: MAT_AIR }
+  ];
+
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fillRect(cx - bodyW - 40, bottomY, (bodyW + 40) * 2, 12);
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.strokeRect(cx - bodyW - 40, bottomY, (bodyW + 40) * 2, 12);
+  ctx.fillRect(cx - bodyW - 40, shelfTopY - 14, (bodyW + 40) * 2, 14);
+
+  const liquidPoly = geo.innerPoly.filter(p => p[1] >= geo.fillY);
+  if (liquidPoly.length > 2) {
+    const wallPx = 0.3 * PX_PER_MM;
+    const fullLiquidPoly = [[cx - bodyW + wallPx, geo.fillY], [cx + bodyW - wallPx, geo.fillY]].concat(liquidPoly);
+    ctx.beginPath();
+    fullLiquidPoly.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(251, 191, 36, 0.28)';
+    ctx.fill();
+  }
+
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+  ctx.beginPath();
+  geo.outerPoly.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+  ctx.beginPath();
+  geo.innerPoly.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+  ctx.stroke();
+
+  const capW = neckW + 4, capH = 18 * PX_PER_MM;
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.fillRect(cx - capW, topY - capH, capW * 2, capH);
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.strokeRect(cx - capW, topY - capH, capW * 2, capH);
+
+  let rays = [];
+  const bulbY = shelfTopY + 5, bulbX = cx + state.lightPosX;
+  const rayCount = getRayCountFromPreset();
+  const startX = cx - bodyW - 15, endX = cx + bodyW + 15;
+  const stepX = (endX - startX) / (rayCount - 1);
+  const sigma = bodyW * 0.7;
+
+  const incRad = (state.incidentAngle * Math.PI) / 180;
+  const dirX = Math.sin(incRad);
+  const dirY = Math.cos(incRad);
+
+  if (state.lightType === 'shelf') {
+    for (let i = 0; i < rayCount; i++) {
+      const rx = startX + i * stepX;
+      const weight = Math.exp(-Math.pow(rx - bulbX, 2) / (2 * sigma * sigma));
+      rays.push({ x: rx, y: shelfTopY + 2, dx: dirX, dy: dirY, weight });
+    }
+  } else if (state.lightType === 'parallel') {
+    for (let i = 0; i < rayCount; i++) {
+      const rx = startX + i * stepX;
+      rays.push({ x: rx, y: shelfTopY + 2, dx: dirX, dy: dirY, weight: 1.0 });
+    }
+  } else if (state.lightType === 'point') {
+    for (let i = 0; i < rayCount; i++) {
+      const ang = Math.PI * 0.18 + (i / (rayCount - 1)) * (Math.PI * 0.64);
+      rays.push({ x: bulbX, y: bulbY, dx: Math.cos(ang + incRad), dy: Math.sin(ang + incRad), weight: 1.0 });
+    }
+  }
+
+  const capHitY = topY - capH;
+  let totalJuiceDoseE = 0, totalReflectedE = 0, totalAbsPETE = 0, totalWeight = 0;
+
+  rays.forEach(ray => {
+    totalWeight += ray.weight;
+    const tCap = (capHitY - ray.y) / ray.dy;
+    const capHitX = ray.x + ray.dx * tCap;
+    if (ray.dy !== 0 && tCap > 0 && Math.abs(capHitX - cx) <= capW) return;
+
+    const res = traceRayV17([ray.x, ray.y], [ray.dx, ray.dy], polygons, geo.fillY, geo.derivedFacetDeg);
+    if (res.hit) {
+      totalJuiceDoseE += res.juiceDose * ray.weight;
+      totalReflectedE += res.reflectedEnergy * ray.weight;
+      totalAbsPETE += res.absorbedPET * ray.weight;
+
+      if (Math.random() < 100 / rayCount) {
+        ctx.beginPath();
+        res.path.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+        ctx.strokeStyle = res.juiceDose > 0.05 ? 'rgba(239, 68, 68, 0.65)' : 'rgba(52, 211, 153, 0.75)';
+        ctx.lineWidth = 0.85;
+        ctx.stroke();
+      }
+    }
+  });
+
+  const curJuiceDosePct = totalWeight ? (100 * totalJuiceDoseE / totalWeight) : 0;
+  document.getElementById('stat-juiceDose').innerText = curJuiceDosePct.toFixed(1) + '%';
+
+  let sumSweepJuice = 0, cntSweep = 0;
+  for (let sa = 0; sa <= 60; sa += 15) {
+    const rad = sa * Math.PI / 180;
+    const d = [Math.sin(rad), Math.cos(rad)];
+    for (let i = 0; i < 20; i++) {
+      const xv = (cx - bodyW - 15) + (2 * bodyW + 30) * i / 19;
+      const r = traceRayV17([xv, 25], d, polygons, geo.fillY, geo.derivedFacetDeg);
+      if (r.hit) { sumSweepJuice += r.juiceDose; cntSweep++; }
+    }
+  }
+
+  const avgJuiceDosePct = cntSweep ? (100 * sumSweepJuice / cntSweep) : 0;
+  document.getElementById('stat-juiceDoseAvg').innerText = avgJuiceDosePct.toFixed(1) + '%';
+  document.getElementById('stat-protection').innerText = Math.max(0, 100.0 - avgJuiceDosePct).toFixed(1) + '%';
+  document.getElementById('stat-petLoss').innerText = (totalWeight ? (100 * (totalReflectedE + totalAbsPETE) / totalWeight) : 0).toFixed(1) + '%';
+}
+
+function renderCADViews(geo) {
+  const canvas = document.getElementById('cadCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const bodyW = (state.bodyDiamMM / 2) * PX_PER_MM;
+  const neckW = (state.neckDiamMM / 2) * PX_PER_MM;
+
+  // View 1: Section View (Left Box)
+  const c1x = 160;
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fillRect(10, 10, 290, 520);
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.strokeRect(10, 10, 290, 520);
+
+  ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 11px sans-serif';
+  ctx.fillText('📐 SECTION VIEW (剖面 CAD 圖)', 20, 30);
+
+  ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  geo.outerPoly.forEach((p, i) => {
+    const x = c1x + (p[0] - 310);
+    i === 0 ? ctx.moveTo(x, p[1]) : ctx.lineTo(x, p[1]);
+  });
+  ctx.stroke();
+
+  ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 1.0;
+  ctx.beginPath();
+  geo.innerPoly.forEach((p, i) => {
+    const x = c1x + (p[0] - 310);
+    i === 0 ? ctx.moveTo(x, p[1]) : ctx.lineTo(x, p[1]);
+  });
+  ctx.stroke();
+
+  // View 2: Front View (Focused Shoulder Area)
+  const c2x = 460, c2y = 40;
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fillRect(310, 10, 300, 250);
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.strokeRect(310, 10, 300, 250);
+
+  ctx.fillStyle = '#34d399'; ctx.font = 'bold 11px sans-serif';
+  ctx.fillText('🏛️ FRONT VIEW (瓶肩區域正視圖)', 320, 30);
+
+  const shoulderPoints = geo.rawOuter;
+  ctx.fillStyle = 'rgba(52, 211, 153, 0.15)';
+  ctx.strokeStyle = '#34d399'; ctx.lineWidth = 1.5;
+
+  ctx.beginPath();
+  shoulderPoints.forEach((p, i) => {
+    const x = c2x + p.x * 1.3;
+    const y = c2y + (p.y - shoulderPoints[0].y) * 1.3 + 40;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  for (let i = shoulderPoints.length - 1; i >= 0; i--) {
+    const p = shoulderPoints[i];
+    const x = c2x - p.x * 1.3;
+    const y = c2y + (p.y - shoulderPoints[0].y) * 1.3 + 40;
+    ctx.lineTo(x, y);
+  }
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  const capTopY = c2y + 40;
+  ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(c2x - neckW * 1.3, capTopY);
+  ctx.lineTo(c2x + neckW * 1.3, capTopY);
+  ctx.stroke();
+
+  // View 3: Top View
+  const c3x = 460, c3y = 390;
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fillRect(310, 270, 300, 260);
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.strokeRect(310, 270, 300, 260);
+
+  ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 11px sans-serif';
+  ctx.fillText('⭕ TOP VIEW (俯視周向切面)', 320, 290);
+
+  const rBodyCAD = bodyW * 0.7;
+  const rNeckCAD = neckW * 0.7;
+
+  if (state.texture === 'vertical') {
+    const numRibs = Math.max(1, state.texDensity);
+    const ampCAD = (geo.texDepthMM * PX_PER_MM) * 0.5;
+
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (let a = 0; a <= 360; a += 2) {
+      const rad = (a * Math.PI) / 180;
+      const rMod = rBodyCAD + ampCAD * triWave((a / 360) * numRibs);
+      const x = c3x + rMod * Math.cos(rad);
+      const y = c3y + rMod * Math.sin(rad);
+      a === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath(); ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(251, 191, 36, 0.5)';
+    ctx.lineWidth = 1.2;
+    const twistOffsetRad = geo.twistRadTotal;
+
+    for (let i = 0; i < numRibs; i++) {
+      const baseRad = (i / numRibs) * Math.PI * 2;
+      ctx.beginPath();
+      const steps = 20;
+      for (let s = 0; s <= steps; s++) {
+        const frac = s / steps;
+        const curR = rNeckCAD + (rBodyCAD - rNeckCAD) * frac;
+        const curRad = baseRad + twistOffsetRad * frac;
+        const x = c3x + curR * Math.cos(curRad);
+        const y = c3y + curR * Math.sin(curRad);
+        s === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+  } else if (state.texture === 'diamond') {
+    // 鑽石紋 Top View：雙向螺旋網格（受 state.texTwist 動態調控菱形傾角）
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(c3x, c3y, rBodyCAD, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const numRibs = Math.max(3, state.texDensity);
+    ctx.strokeStyle = 'rgba(251, 191, 36, 0.75)'; ctx.lineWidth = 0.9;
+    const twistSweep = Math.max(0.2, (state.texTwist + 15) * Math.PI / 180);
+
+    for (let i = 0; i < numRibs; i++) {
+      const baseRad = (i / numRibs) * Math.PI * 2;
+      
+      // CW Spiral
+      ctx.beginPath();
+      for (let s = 0; s <= 20; s++) {
+        const frac = s / 20;
+        const curR = rNeckCAD + (rBodyCAD - rNeckCAD) * frac;
+        const curRad = baseRad + twistSweep * frac;
+        const x = c3x + curR * Math.cos(curRad);
+        const y = c3y + curR * Math.sin(curRad);
+        s === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // CCW Spiral
+      ctx.beginPath();
+      for (let s = 0; s <= 20; s++) {
+        const frac = s / 20;
+        const curR = rNeckCAD + (rBodyCAD - rNeckCAD) * frac;
+        const curRad = baseRad - twistSweep * frac;
+        const x = c3x + curR * Math.cos(curRad);
+        const y = c3y + curR * Math.sin(curRad);
+        s === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+  } else if (state.texture === 'sawtooth' || state.texture === 'wave') {
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(c3x, c3y, rBodyCAD, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const numRings = Math.max(2, state.texDensity);
+    ctx.strokeStyle = 'rgba(251, 191, 36, 0.75)'; ctx.lineWidth = 0.95;
+    for (let i = 1; i <= numRings; i++) {
+      const ringR = rNeckCAD + (rBodyCAD - rNeckCAD) * (i / (numRings + 1));
+      ctx.beginPath();
+      ctx.arc(c3x, c3y, ringR, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  } else {
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(c3x, c3y, rBodyCAD, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // 瓶頸內圓
+  ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1; ctx.beginPath();
+  ctx.arc(c3x, c3y, rNeckCAD, 0, Math.PI * 2); ctx.stroke();
+
+  // 中心十字線
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)'; ctx.setLineDash([2, 2]);
+  ctx.beginPath(); ctx.moveTo(c3x - rBodyCAD - 20, c3y); ctx.lineTo(c3x + rBodyCAD + 20, c3y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(c3x, c3y - rBodyCAD - 20); ctx.lineTo(c3x, c3y + rBodyCAD + 20); ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function project3D(x, y, z, cx, cy, scale) {
+  // XYZ 45° Isometric Orthographic Projection
+  const angle = Math.PI / 4; // 45 degrees
+  const cosA = Math.cos(angle);
+  const sinA = Math.sin(angle);
+
+  // Rotate and project
+  const px = (x - z) * cosA;
+  const py = -y + (x + z) * sinA * 0.5;
+
+  return {
+    x: cx + px * scale,
+    y: cy + py * scale
+  };
+}
+
+function isFrontFacing(ang) {
+  // 3D 空間正交 45° 等角視角下，瓶身表面幾何的「可視角前視面」判定：
+  // XZ 平面上向量夾角範圍 -45° <= ang <= 135°，其餘為背向面
+  return Math.cos(ang - Math.PI / 4) >= -0.12;
+}
+
+function renderIsometricView(geo) {
+  const canvas = document.getElementById('isoCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2 + 130;
+  const scale = 2.8;
+
+  const bodyR_MM = state.bodyDiamMM / 2;
+  const neckR_MM = state.neckDiamMM / 2;
+  const shoulderH_MM = state.shoulderHeightMM;
+  const capH_MM = 18;
+  const nMeridians = 8;
+
+  // 1. 繪製 3D 座標軸標示
+  const axisOx = 50, axisOy = 490, axisLen = 45;
+  ctx.lineWidth = 1.5;
+
+  const pX = project3D(axisLen, 0, 0, axisOx, axisOy, 1);
+  ctx.strokeStyle = '#38bdf8'; ctx.beginPath(); ctx.moveTo(axisOx, axisOy); ctx.lineTo(pX.x, pX.y); ctx.stroke();
+  ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 11px sans-serif'; ctx.fillText('X', pX.x + 5, pX.y + 2);
+
+  const pY = project3D(0, axisLen, 0, axisOx, axisOy, 1);
+  ctx.strokeStyle = '#34d399'; ctx.beginPath(); ctx.moveTo(axisOx, axisOy); ctx.lineTo(pY.x, pY.y); ctx.stroke();
+  ctx.fillStyle = '#34d399'; ctx.font = 'bold 11px sans-serif'; ctx.fillText('Y (H)', pY.x - 2, pY.y - 5);
+
+  const pZ = project3D(0, 0, axisLen, axisOx, axisOy, 1);
+  ctx.strokeStyle = '#fbbf24'; ctx.beginPath(); ctx.moveTo(axisOx, axisOy); ctx.lineTo(pZ.x, pZ.y); ctx.stroke();
+  ctx.fillStyle = '#fbbf24'; ctx.font = 'bold 11px sans-serif'; ctx.fillText('Z', pZ.x - 12, pZ.y + 5);
+
+  ctx.fillStyle = '#60a5fa'; ctx.font = 'bold 12px sans-serif';
+  ctx.fillText('🧊 3D ISOMETRIC CAD WIREFRAME (── 實線: 波峰/峰線 Peak  |  ╌ ╌ 虛線: 波谷/溝線 Valley)', 20, 28);
+  ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = '11px sans-serif';
+  ctx.fillText('可視角背向消隱 + 波峰(實線)/波谷(虛線)視覺區分，清晰辨識微結構高低起伏', 20, 46);
+
+  // 2. 繪製 CAD 地面基準網格
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)'; ctx.lineWidth = 0.8; ctx.setLineDash([]);
+  const gridStep = 20, gridRange = 60;
+  for (let gx = -gridRange; gx <= gridRange; gx += gridStep) {
+    const pA = project3D(gx, 0, -gridRange, cx, cy, scale);
+    const pB = project3D(gx, 0, gridRange, cx, cy, scale);
+    ctx.beginPath(); ctx.moveTo(pA.x, pA.y); ctx.lineTo(pB.x, pB.y); ctx.stroke();
+  }
+  for (let gz = -gridRange; gz <= gridRange; gz += gridStep) {
+    const pA = project3D(-gridRange, 0, gz, cx, cy, scale);
+    const pB = project3D(gridRange, 0, gz, cx, cy, scale);
+    ctx.beginPath(); ctx.moveTo(pA.x, pA.y); ctx.lineTo(pB.x, pB.y); ctx.stroke();
+  }
+
+  const numRadSteps = 72;
+
+  // 3. 繪製瓶身底面邊界 (僅繪製可視前半圓弧)
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.85)'; ctx.lineWidth = 1.6; ctx.setLineDash([]);
+  ctx.beginPath();
+  let started = false;
+  for (let i = 0; i <= numRadSteps; i++) {
+    const ang = (i / numRadSteps) * Math.PI * 2 - Math.PI / 4;
+    if (ang <= 3 * Math.PI / 4 + 0.02) {
+      const p = project3D(bodyR_MM * Math.cos(ang), 0, bodyR_MM * Math.sin(ang), cx, cy, scale);
+      if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+      else { ctx.lineTo(p.x, p.y); }
+    }
+  }
+  ctx.stroke();
+
+  // 4. 繪製 3D 瓶肩曲面特徵 (區分波峰[實線]與波谷[虛線])
+  const shoulderSamples = geo.rawOuter;
+  const texDepthMM = geo.texDepthMM;
+  const texDensity = Math.max(1, state.texDensity);
+  const twistRadTotal = geo.twistRadTotal;
+
+  if (state.texture === 'sawtooth' || state.texture === 'wave') {
+    const numRings = Math.max(2, texDensity * 2);
+
+    for (let k = 0; k <= numRings; k++) {
+      const frac = k / numRings;
+      const sampleIdx = Math.floor(frac * (shoulderSamples.length - 1));
+      const pt = shoulderSamples[sampleIdx];
+      const rBase = pt.x / PX_PER_MM;
+      const yMM = (shoulderSamples[shoulderSamples.length - 1].y - pt.y) / PX_PER_MM;
+
+      let waveVal = 0;
+      if (state.texture === 'sawtooth') {
+        waveVal = triWave(frac * texDensity);
+      } else if (state.texture === 'wave') {
+        waveVal = Math.sin(frac * Math.PI * texDensity * 2);
+      }
+
+      // 波峰 vs 波谷 顯色與虛實線區分：
+      // 波峰 (waveVal >= 0) 採用高亮藍實線；波谷 (waveVal < 0) 採用半透明虛線
+      const isPeak = waveVal >= -0.05;
+      if (isPeak) {
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.95)';
+        ctx.lineWidth = 1.3;
+        ctx.setLineDash([]);
+      } else {
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+        ctx.lineWidth = 0.9;
+        ctx.setLineDash([3, 3]);
+      }
+
+      ctx.beginPath();
+      started = false;
+      for (let i = 0; i <= numRadSteps; i++) {
+        const ang = (i / numRadSteps) * Math.PI * 2 - Math.PI / 4;
+        if (ang <= 3 * Math.PI / 4 + 0.02) {
+          const rMod = rBase + texDepthMM * 0.5 * waveVal;
+          const p = project3D(rMod * Math.cos(ang), yMM, rMod * Math.sin(ang), cx, cy, scale);
+          if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+          else { ctx.lineTo(p.x, p.y); }
+        }
+      }
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    ctx.strokeStyle = 'rgba(52, 211, 153, 0.55)'; ctx.lineWidth = 1.0;
+    for (let i = 0; i < nMeridians; i++) {
+      const baseAng = (i / nMeridians) * Math.PI * 2;
+      if (!isFrontFacing(baseAng)) continue;
+
+      ctx.beginPath();
+      for (let s = 0; s < shoulderSamples.length; s += 2) {
+        const pt = shoulderSamples[s];
+        const frac = s / (shoulderSamples.length - 1);
+        const rBase = pt.x / PX_PER_MM;
+        const yMM = (shoulderSamples[shoulderSamples.length - 1].y - pt.y) / PX_PER_MM;
+        let rMod = rBase;
+
+        if (state.texture === 'sawtooth') {
+          rMod += texDepthMM * 0.5 * triWave(frac * texDensity);
+        } else if (state.texture === 'wave') {
+          rMod += texDepthMM * 0.5 * Math.sin(frac * Math.PI * texDensity * 2);
+        }
+
+        const p = project3D(rMod * Math.cos(baseAng), yMM, rMod * Math.sin(baseAng), cx, cy, scale);
+        s === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+      }
+      ctx.stroke();
+    }
+
+  } else if (state.texture === 'diamond') {
+    const numRibs = Math.max(3, texDensity);
+    const twistSweep = Math.max(0.2, (state.texTwist + 15) * Math.PI / 180);
+
+    for (let i = 0; i < numRibs * 2; i++) {
+      const baseAng = (i / (numRibs * 2)) * Math.PI * 2;
+      const isPeakSpiral = (i % 2 === 0);
+
+      if (isPeakSpiral) {
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.95)';
+        ctx.lineWidth = 1.3;
+        ctx.setLineDash([]);
+      } else {
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.45)';
+        ctx.lineWidth = 0.9;
+        ctx.setLineDash([3, 3]);
+      }
+
+      // CW Spiral
+      ctx.beginPath();
+      started = false;
+      for (let s = 0; s < shoulderSamples.length; s += 2) {
+        const pt = shoulderSamples[s];
+        const frac = s / (shoulderSamples.length - 1);
+        const rBase = pt.x / PX_PER_MM;
+        const yMM = (shoulderSamples[shoulderSamples.length - 1].y - pt.y) / PX_PER_MM;
+        const curAng = baseAng + twistSweep * frac;
+
+        if (isFrontFacing(curAng)) {
+          const p = project3D(rBase * Math.cos(curAng), yMM, rBase * Math.sin(curAng), cx, cy, scale);
+          if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+          else { ctx.lineTo(p.x, p.y); }
+        } else {
+          started = false;
+        }
+      }
+      ctx.stroke();
+
+      // CCW Spiral
+      ctx.beginPath();
+      started = false;
+      for (let s = 0; s < shoulderSamples.length; s += 2) {
+        const pt = shoulderSamples[s];
+        const frac = s / (shoulderSamples.length - 1);
+        const rBase = pt.x / PX_PER_MM;
+        const yMM = (shoulderSamples[shoulderSamples.length - 1].y - pt.y) / PX_PER_MM;
+        const curAng = baseAng - twistSweep * frac;
+
+        if (isFrontFacing(curAng)) {
+          const p = project3D(rBase * Math.cos(curAng), yMM, rBase * Math.sin(curAng), cx, cy, scale);
+          if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+          else { ctx.lineTo(p.x, p.y); }
+        } else {
+          started = false;
+        }
+      }
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // 鑽石金字塔層高同心環 (區分波峰/波谷環)
+    const numRings = Math.max(2, Math.floor(numRibs / 2));
+    for (let k = 1; k <= numRings; k++) {
+      const frac = k / (numRings + 1);
+      const sampleIdx = Math.floor(frac * (shoulderSamples.length - 1));
+      const pt = shoulderSamples[sampleIdx];
+      const rBase = pt.x / PX_PER_MM;
+      const yMM = (shoulderSamples[shoulderSamples.length - 1].y - pt.y) / PX_PER_MM;
+
+      const isPeakRing = (k % 2 === 1);
+      if (isPeakRing) {
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.85)';
+        ctx.lineWidth = 1.1;
+        ctx.setLineDash([]);
+      } else {
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.40)';
+        ctx.lineWidth = 0.8;
+        ctx.setLineDash([3, 3]);
+      }
+
+      ctx.beginPath();
+      started = false;
+      for (let i = 0; i <= numRadSteps; i++) {
+        const ang = (i / numRadSteps) * Math.PI * 2 - Math.PI / 4;
+        if (ang <= 3 * Math.PI / 4 + 0.02) {
+          const p = project3D(rBase * Math.cos(ang), yMM, rBase * Math.sin(ang), cx, cy, scale);
+          if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+          else { ctx.lineTo(p.x, p.y); }
+        }
+      }
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    ctx.strokeStyle = 'rgba(52, 211, 153, 0.6)'; ctx.lineWidth = 1.2;
+    const silAngles = [-Math.PI / 4, 3 * Math.PI / 4];
+    silAngles.forEach(baseAng => {
+      ctx.beginPath();
+      for (let s = 0; s < shoulderSamples.length; s += 2) {
+        const pt = shoulderSamples[s];
+        const rBase = pt.x / PX_PER_MM;
+        const yMM = (shoulderSamples[shoulderSamples.length - 1].y - pt.y) / PX_PER_MM;
+        const p = project3D(rBase * Math.cos(baseAng), yMM, rBase * Math.sin(baseAng), cx, cy, scale);
+        s === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+      }
+      ctx.stroke();
+    });
+
+  } else {
+    // 縱向直紋模式 (區分條紋波峰[實線]與波谷[虛線])
+    const numRibs = texDensity;
+    const nMeridiansLocal = state.texture === 'vertical' ? numRibs * 2 : nMeridians;
+
+    for (let i = 0; i < nMeridiansLocal; i++) {
+      const baseAng = (i / nMeridiansLocal) * Math.PI * 2;
+      const isPeakRib = (i % 2 === 0);
+
+      if (state.texture === 'vertical') {
+        if (isPeakRib) {
+          ctx.strokeStyle = 'rgba(251, 191, 36, 0.95)';
+          ctx.lineWidth = 1.35;
+          ctx.setLineDash([]);
+        } else {
+          ctx.strokeStyle = 'rgba(251, 191, 36, 0.40)';
+          ctx.lineWidth = 0.85;
+          ctx.setLineDash([3, 3]);
+        }
+      } else {
+        ctx.strokeStyle = 'rgba(52, 211, 153, 0.75)';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([]);
+      }
+
+      ctx.beginPath();
+      started = false;
+
+      for (let s = 0; s < shoulderSamples.length; s += 2) {
+        const pt = shoulderSamples[s];
+        const frac = s / (shoulderSamples.length - 1);
+        const rBase = pt.x / PX_PER_MM;
+        const yMM = (shoulderSamples[shoulderSamples.length - 1].y - pt.y) / PX_PER_MM;
+        let curAng = baseAng;
+        let rMod = rBase;
+
+        if (state.texture === 'vertical') {
+          curAng += frac * twistRadTotal;
+          rMod += texDepthMM * 0.5 * Math.cos(numRibs * curAng);
+        }
+
+        if (isFrontFacing(curAng)) {
+          const p = project3D(rMod * Math.cos(curAng), yMM, rMod * Math.sin(curAng), cx, cy, scale);
+          if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+          else { ctx.lineTo(p.x, p.y); }
+        } else {
+          started = false;
+        }
+      }
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+
+  // 5. 繪製瓶頸與瓶蓋 Wireframe
+  const neckTopY = shoulderH_MM;
+  const capTopY = shoulderH_MM + capH_MM;
+
+  ctx.strokeStyle = 'rgba(52, 211, 153, 0.85)'; ctx.lineWidth = 1.6; ctx.setLineDash([]);
+  ctx.beginPath();
+  started = false;
+  for (let i = 0; i <= numRadSteps; i++) {
+    const ang = (i / numRadSteps) * Math.PI * 2 - Math.PI / 4;
+    if (ang <= 3 * Math.PI / 4 + 0.02) {
+      const p = project3D(neckR_MM * Math.cos(ang), neckTopY, neckR_MM * Math.sin(ang), cx, cy, scale);
+      if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+      else { ctx.lineTo(p.x, p.y); }
+    }
+  }
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.65)'; ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  started = false;
+  for (let i = 0; i <= numRadSteps; i++) {
+    const ang = (i / numRadSteps) * Math.PI * 2 - Math.PI / 4;
+    if (ang <= 3 * Math.PI / 4 + 0.02) {
+      const p = project3D(neckR_MM * Math.cos(ang), capTopY, neckR_MM * Math.sin(ang), cx, cy, scale);
+      if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+      else { ctx.lineTo(p.x, p.y); }
+    }
+  }
+  ctx.stroke();
+
+  const capPillars = [-Math.PI / 4, 0, Math.PI / 4, Math.PI / 2, 3 * Math.PI / 4];
+  capPillars.forEach(ang => {
+    const pA = project3D(neckR_MM * Math.cos(ang), neckTopY, neckR_MM * Math.sin(ang), cx, cy, scale);
+    const pB = project3D(neckR_MM * Math.cos(ang), capTopY, neckR_MM * Math.sin(ang), cx, cy, scale);
+    ctx.beginPath(); ctx.moveTo(pA.x, pA.y); ctx.lineTo(pB.x, pB.y); ctx.stroke();
+  });
+
+  // 6. 滿杯液面 3D 前視圓環 Wireframe
+  ctx.strokeStyle = 'rgba(245, 158, 11, 0.85)'; ctx.lineWidth = 1.4; ctx.setLineDash([4, 2]);
+  ctx.beginPath();
+  started = false;
+  for (let i = 0; i <= numRadSteps; i++) {
+    const ang = (i / numRadSteps) * Math.PI * 2 - Math.PI / 4;
+    if (ang <= 3 * Math.PI / 4 + 0.02) {
+      const p = project3D((neckR_MM + 1) * Math.cos(ang), shoulderH_MM, (neckR_MM + 1) * Math.sin(ang), cx, cy, scale);
+      if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+      else { ctx.lineTo(p.x, p.y); }
+    }
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+}
+
+function renderAllViews() {
+  const cx = 310;
+  const bottomY = 500;
+  const topY = bottomY - state.bottleHeightMM * PX_PER_MM;
+  const bodyW = (state.bodyDiamMM / 2) * PX_PER_MM;
+  const neckW = (state.neckDiamMM / 2) * PX_PER_MM;
+
+  const geo = buildBottleGeometry(cx, topY, neckW, bodyW, bottomY);
+
+  document.getElementById('der-facetAngle').innerText = geo.derivedFacetDeg.toFixed(1) + '°';
+  document.getElementById('der-depthMM').innerText = geo.texDepthMM.toFixed(2) + ' mm';
+  document.getElementById('der-wallMM').innerText = '0.40 → 0.28 mm';
+  document.getElementById('der-rayCount').innerText = getRayCountFromPreset() + ' 條';
+  document.getElementById('der-surfArea').innerText = geo.analysis.surfAreaCM2.toFixed(1) + ' cm²';
+  document.getElementById('der-avgSlope').innerText = geo.analysis.avgSlopeDeg.toFixed(1) + '°';
+
+  const drinkMat = getActiveDrinkMaterial();
+  const critAngle = Math.asin(drinkMat.n / MAT_PET.n) * 180 / Math.PI;
+  document.getElementById('der-tirStatus').innerText = `${critAngle.toFixed(1)}° (${drinkMat.name})`;
+
+  // 光學追蹤與 4 大 KPI 數據全時動態跑動更新
+  renderOpticalSim(geo);
+
+  if (currentTab === 'cadTab') {
+    renderCADViews(geo);
+  } else if (currentTab === 'isoTab') {
+    renderIsometricView(geo);
+  }
+}
+
+// Initial Boot
+window.onload = function() {
+  applyCustomHex('#080c14');
+  updateSim();
+};
+</script>
+</body>
+</html>
